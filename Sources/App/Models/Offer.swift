@@ -53,7 +53,7 @@ final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
     }
 }
 
-extension Tag {
+extension Offer {
     
     func products() throws -> Siblings<Product> {
         return try siblings()
