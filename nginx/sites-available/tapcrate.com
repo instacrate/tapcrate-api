@@ -49,7 +49,7 @@ server {
     include snippets/ssl-api.tapcrate.com.conf;
     include snippets/ssl-params.conf;
 
-    root /home/hakon/tapcrate/tapcrate-dev-api/;
+    root /home/hakon/tapcrate/tapcrate-api/;
 
     server_name api.tapcrate.com www.api.tapcrate.com;
 
@@ -71,7 +71,7 @@ server {
     include snippets/ssl-api.tapcrate.com.conf;
     include snippets/ssl-params.conf;
 
-    root /home/hakon/tapcrate/tapcrate-dev-api/Public;
+    root /home/hakon/tapcrate/tapcrate-api/Public;
 
     server_name static.tapcrate.com www.static.tapcrate.com;
 
