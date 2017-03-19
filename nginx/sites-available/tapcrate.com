@@ -4,7 +4,7 @@
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    server_name *.polymyr.com;
+    server_name *.tapcrate.com;
 
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
@@ -19,12 +19,12 @@ server {
     listen 443 ssl http2 default_server;
     listen [::]:443 ssl http2 default_server;
 
-    server_name polymyr.com www.polymyr.com;
+    server_name tapcrate.com www.tapcrate.com;
 
-    include snippets/ssl-polymyr.com.conf;
+    include snippets/ssl-tapcrate.com.conf;
     include snippets/ssl-params.conf;
 
-    root /home/jasper/polymyr;
+    root /home/jasper/tapcrate;
     index index.php;
 
     location / {
@@ -39,10 +39,6 @@ server {
     location ~ /\.ht {
         deny all;
     }
-
-    location ~ /.well-known {
-        allow all;
-    }
 }
 
 server {
@@ -50,17 +46,12 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
 
-    include snippets/ssl-api.polymyr.com.conf;
+    include snippets/ssl-api.tapcrate.com.conf;
     include snippets/ssl-params.conf;
 
-    root /home/hakon/polymyr/polymyr-dev-api/;
+    root /home/hakon/tapcrate/tapcrate-dev-api/;
 
-    server_name api.polymyr.com www.api.polymyr.com;
-
-    location ~ /.well-known {
-        allow all;
-        try_files $uri =404;
-    }
+    server_name api.tapcrate.com www.api.tapcrate.com;
 
     location / {
         include proxy_params;
@@ -77,16 +68,14 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
 
-    include snippets/ssl-api.polymyr.com.conf;
+    include snippets/ssl-api.tapcrate.com.conf;
     include snippets/ssl-params.conf;
 
-    root /home/hakon/polymyr/polymyr-dev-api/;
+    root /home/hakon/tapcrate/tapcrate-dev-api/Public;
 
-    server_name static.polymyr.com www.static.polymyr.com;
+    server_name static.tapcrate.com www.static.tapcrate.com;
 
     location / {
-        root /home/hakon/polymyr/polymyr-dev-api/Public;
-
         include h5bp/basic.conf;
 
         tcp_nodelay on;
@@ -97,9 +86,5 @@ server {
 
         proxy_cache static;
         try_files $uri =404;
-    }
-
-    location ~ /.well-known {
-        allow all;
     }
 }
