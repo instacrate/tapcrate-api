@@ -2,8 +2,8 @@
 
 reset_production_server() {
 
-	local prodServiceFileName="polymyrd.service.txt"
-	local prodServiceName="polymyrd.service"
+	local prodServiceFileName="tapcrated.service.txt"
+	local prodServiceName="tapcrated.service"
 	local destinationPath="/etc/systemd/system/"
 
 	echo "\n>>>> sudo cp $prodServiceFileName $destinationPath$prodServiceName"
@@ -32,10 +32,10 @@ fi
 echo "\n>>>> vapor build --release=true --fetch=false --verbose"
 vapor build --release=true --fetch=false --verbose
 
-if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- polymyrd.service.txt)" ]; then
+if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- tapcrated.service.txt)" ]; then
     echo "    \n>>>> Detected changes in production server configuration files!"
 	reset_production_server
 fi
 
-echo "\n>>>> sudo systemctl restart instacrated.service"
-sudo systemctl restart polymyrd.service
+echo "\n>>>> sudo systemctl restart tapcrated.service"
+sudo systemctl restart tapcrated.service

@@ -5,6 +5,12 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name *.polymyr.com;
+
+    location ^~ /.well-known/acme-challenge/ {
+        default_type "text/plain";
+        root /tmp/letsencrypt-auto/;
+    }
+
     return 301 https://$server_name$request_uri;
 }
 
