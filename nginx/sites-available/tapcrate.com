@@ -2,12 +2,12 @@
 # Redirect all HTTP trafic to HTTPS
 
 server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
+    listen 80;
+    listen [::]:80;
 
-    server_name api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com tapcrate.com www.tapcrate.com;
+    server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com;
 
-    location ^~ /.well-known/acme-challenge/ {
+    location ^~ '/.well-known/acme-challenge/' {
         default_type "text/plain";
         root /tmp/letsencrypt-auto;
     }
