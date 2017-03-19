@@ -12,6 +12,10 @@ server {
         root /tmp/letsencrypt-auto;
     }
 
+    location = /.well-known/acme-challenge/ {
+        return 404;
+    }
+
     location / {
         return 301 https://$server_name$request_uri;
     }
