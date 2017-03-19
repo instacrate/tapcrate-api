@@ -10,6 +10,7 @@ server {
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
         root /tmp/letsencrypt-auto;
+        try_files $uri =404;
     }
 
     location = /.well-known/acme-challenge/ {
