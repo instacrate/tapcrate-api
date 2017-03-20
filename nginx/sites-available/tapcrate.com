@@ -5,7 +5,7 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server;
 
-    error_log /var/logs/nginx/default_server.error.log debug;
+    error_log /var/log/nginx/default_server.error.log debug;
 
     server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com;
 
