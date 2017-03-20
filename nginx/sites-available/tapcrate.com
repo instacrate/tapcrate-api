@@ -5,19 +5,19 @@ server {
     listen 80;
     listen [::]:80;
 
-    root /tmp/letsencrypt-auto;
+    root /tmp/letsencrypt-auto/;
 
     server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com;
 
-    location ^~ /.well-known/acme-challenge/ {
+    location /.well-known/acme-challenge/ {
         default_type "text/plain";
         allow all;
         try_files $uri =404;
     }
 
-    location = /.well-known/acme-challenge/ {
-        return 404;
-    }
+    # location = /.well-known/acme-challenge/ {
+    #     return 404;
+    # }
 
     # location / {
     #     return 301 https://$server_name$request_uri;
