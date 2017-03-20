@@ -5,22 +5,18 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server;
 
-    error_log /var/log/nginx/default_server.error.log debug;
-
     server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com;
 
     location ^~ /.well-known/acme-challenge/ {
-        add_header location 1;
         default_type "text/plain";
         root /tmp/letsencrypt-auto/;
     }
 
-    # location = /.well-known/acme-challenge/ {
-    #     return 404;
-    # }
+    location = /.well-known/acme-challenge/ {
+        return 404;
+    }
 
     location / {
-        add_header location 2;
         return 301 https://$server_name$request_uri;
     }
 }
@@ -39,10 +35,12 @@ server {
     index index.php;
 
     location / {
+        add_header location 3;
         try_files $uri $uri/ =404;
     }
 
     location ~ \.php$ {
+        add_header location 4;
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php7.0-fpm.sock;
     }
