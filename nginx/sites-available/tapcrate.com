@@ -21,76 +21,76 @@ server {
     }
 }
 
-server {
+# server {
 
-    listen 443 ssl http2 default_server;
-    listen [::]:443 ssl http2 default_server;
+#     listen 443 ssl http2 default_server;
+#     listen [::]:443 ssl http2 default_server;
 
-    server_name tapcrate.com www.tapcrate.com;
+#     server_name tapcrate.com www.tapcrate.com;
 
-    include snippets/ssl-tapcrate.com.conf;
-    include snippets/ssl-params.conf;
+#     include snippets/ssl-tapcrate.com.conf;
+#     include snippets/ssl-params.conf;
 
-    root /home/jasper/tapcrate;
-    index index.php;
+#     root /home/jasper/tapcrate;
+#     index index.php;
 
-    location / {
-        add_header location 3;
-        try_files $uri $uri/ =404;
-    }
+#     location / {
+#         add_header location 3;
+#         try_files $uri $uri/ =404;
+#     }
 
-    location ~ \.php$ {
-        add_header location 4;
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php7.0-fpm.sock;
-    }
+#     location ~ \.php$ {
+#         add_header location 4;
+#         include snippets/fastcgi-php.conf;
+#         fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+#     }
 
-    location ~ /\.ht {
-        deny all;
-    }
-}
+#     location ~ /\.ht {
+#         deny all;
+#     }
+# }
 
-server {
+# server {
 
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+#     listen 443 ssl http2;
+#     listen [::]:443 ssl http2;
 
-    include snippets/ssl-api.tapcrate.com.conf;
-    include snippets/ssl-params.conf;
+#     include snippets/ssl-api.tapcrate.com.conf;
+#     include snippets/ssl-params.conf;
 
-    root /home/hakon/tapcrate/tapcrate-api;
+#     root /home/hakon/tapcrate/tapcrate-api;
 
-    server_name api.tapcrate.com www.api.tapcrate.com;
+#     server_name api.tapcrate.com www.api.tapcrate.com;
 
-    location / {
-        include proxy_params;
-        proxy_pass http://127.0.0.1:8080;
-    }
-}
+#     location / {
+#         include proxy_params;
+#         proxy_pass http://127.0.0.1:8080;
+#     }
+# }
 
-proxy_cache_path /data/nginx/cache levels=1:2 keys_zone=static:10m inactive=60m use_temp_path=off max_size=4g;
+# proxy_cache_path /data/nginx/cache levels=1:2 keys_zone=static:10m inactive=60m use_temp_path=off max_size=4g;
 
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+# server {
+#     listen 443 ssl http2;
+#     listen [::]:443 ssl http2;
 
-    include snippets/ssl-api.tapcrate.com.conf;
-    include snippets/ssl-params.conf;
+#     include snippets/ssl-api.tapcrate.com.conf;
+#     include snippets/ssl-params.conf;
 
-    root /home/hakon/tapcrate/tapcrate-api/Public;
+#     root /home/hakon/tapcrate/tapcrate-api/Public;
 
-    server_name static.tapcrate.com www.static.tapcrate.com;
+#     server_name static.tapcrate.com www.static.tapcrate.com;
 
-    location / {
-        include h5bp/basic.conf;
+#     location / {
+#         include h5bp/basic.conf;
 
-        tcp_nodelay on;
-        keepalive_timeout 65;
-        sendfile on;
-        tcp_nopush on;
-        sendfile_max_chunk 1m;
+#         tcp_nodelay on;
+#         keepalive_timeout 65;
+#         sendfile on;
+#         tcp_nopush on;
+#         sendfile_max_chunk 1m;
 
-        proxy_cache static;
-        try_files $uri =404;
-    }
-}
+#         proxy_cache static;
+#         try_files $uri =404;
+#     }
+# }
