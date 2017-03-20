@@ -26,21 +26,19 @@ server {
     listen 443 ssl http2 default_server;
     listen [::]:443 ssl http2 default_server;
 
-    server_name tapcrate.com www.tapcrate.com;
-
     include snippets/ssl-tapcrate.com.conf;
     include snippets/ssl-params.conf;
 
+    server_name tapcrate.com www.tapcrate.com;
+
     root /home/jasper/tapcrate;
-    index index.php;
+    index index.php index.html;
 
     location / {
-        add_header location 3;
         try_files $uri $uri/ =404;
     }
 
     location ~ \.php$ {
-        add_header location 4;
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php7.0-fpm.sock;
     }
