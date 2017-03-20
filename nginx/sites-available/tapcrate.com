@@ -72,8 +72,8 @@ server {
 proxy_cache_path /data/nginx/cache levels=1:2 keys_zone=static:10m inactive=60m use_temp_path=off max_size=4g;
 
 server {
-    listen 80;
-    listen [::]:80;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
 
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
