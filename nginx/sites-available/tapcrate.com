@@ -5,7 +5,7 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com;
+    server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com www.staging.tapcrate.com staging.tapcrate.com;
 
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
