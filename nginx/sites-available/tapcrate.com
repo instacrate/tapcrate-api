@@ -11,6 +11,7 @@ server {
 
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
+        allow all;
         try_files $uri =404;
     }
 
