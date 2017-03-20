@@ -10,6 +10,7 @@ server {
     server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com;
 
     location ^~ /.well-known/acme-challenge/ {
+        add_header location 1;
         default_type "text/plain";
         root /tmp/letsencrypt-auto/;
     }
@@ -19,6 +20,7 @@ server {
     # }
 
     location / {
+        add_header location 2;
         return 301 https://$server_name$request_uri;
     }
 }
