@@ -29,6 +29,8 @@ drop.resource("customerAddresses", CustomerAddressController())
 drop.resource("tags", TagController())
 drop.resource("descriptions", DescriptionController())
 
+drop.resource("offers", OfferController())
+
 drop.collection(StripeCollection.self)
 drop.collection(AuthenticationCollection())
 

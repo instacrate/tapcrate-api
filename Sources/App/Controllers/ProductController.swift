@@ -117,7 +117,7 @@ final class ProductController: ResourceRepresentable {
             return try expander.expand(for: product, owner: "product", mappings: { (key, product) -> (NodeRepresentable?) in
                 switch key {
                 case "offers":
-                    return try product.offers().first()
+                    return try product.offers().all().makeNode()
                 case "tags":
                     return try product.tags().all().makeNode()
                 case "maker":

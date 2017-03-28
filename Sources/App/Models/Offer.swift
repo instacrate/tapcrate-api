@@ -19,7 +19,7 @@ enum OfferType: String, NodeConvertible {
 
 final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
     
-    static var permitted: [String] = ["type"]
+    static var permitted: [String] = ["type", "product_id", "line_1", "line_2", "expiration", "code"]
     
     var id: Node?
     var exists = false
