@@ -12,10 +12,8 @@ import Fluent
 import Sanitized
 
 enum OfferType: String, NodeConvertible {
-    case none
-    case discount
     case free
-    case percent
+    case coupon
     case deal
 }
 
@@ -27,24 +25,46 @@ final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
     var exists = false
     
     let type: OfferType
+
+    let line_1: String
+    let line_2: String
+    let expiration: Date
+    let code: String
+
+    var product_id: Node?
     
     init(node: Node, in context: Context) throws {
         id = node["id"]
+        product_id = node["product_id"] ?? (context as? Node)
         type = try node.extract("type")
+        line_1 = try node.extract("line_1")
+        line_2 = try node.extract("line_2")
+        expiration = try node.extract("expiration")
+        code = try node.extract("code")
     }
     
     func makeNode(context: Context) throws -> Node {
         return try Node(node: [
-            "type" : type
+            "type" : try type.makeNode(),
+            "line_1" : .string(line_1),
+            "line_2" : .string(line_2),
+            "expiration" : try expiration.makeNode(),
+            "code" : .string(code)
         ]).add(objects: [
-            "id" : id
+            "id" : id,
+            "product_id" : product_id
         ])
     }
     
     static func prepare(_ database: Database) throws {
-        try database.create(self.entity, closure: { answer in
-            answer.id()
-            answer.string("type")
+        try database.create(self.entity, closure: { offer in
+            offer.id()
+            offer.string("type")
+            offer.string("line_1")
+            offer.string("line_2")
+            offer.string("expiration")
+            offer.string("code")
+            offer.parent(Product.self)
         })
     }
     
@@ -55,7 +75,7 @@ final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
 
 extension Offer {
     
-    func products() throws -> Siblings<Product> {
-        return try siblings()
+    func product() throws -> Parent<Product> {
+        return try parent(product_id)
     }
 }

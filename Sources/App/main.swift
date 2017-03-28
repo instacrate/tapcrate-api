@@ -25,11 +25,6 @@ drop.picture(base: "customers", slug: "customer_id", picture: PictureController<
 drop.resource("products", ProductController())
 drop.picture(base: "products", slug: "products_id", picture: PictureController<ProductPicture>())
 
-drop.resource("questions", QuestionController())
-drop.resource("campaigns", CampaignController())
-drop.resource("answers", AnswerController())
-drop.resource("orders", OrderController())
-drop.resource("sections", SectionController())
 drop.resource("customerAddresses", CustomerAddressController())
 drop.resource("tags", TagController())
 drop.resource("descriptions", DescriptionController())

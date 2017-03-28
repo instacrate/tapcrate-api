@@ -70,15 +70,15 @@ extension Product {
         return try parent(maker_id)
     }
     
-    func campaign() -> Children<Campaign> {
-        return children()
-    }
-    
     func tags() throws -> Siblings<Tag> {
         return try siblings()
     }
     
     func pictures() -> Children<ProductPicture> {
         return children("owner_id", ProductPicture.self)
+    }
+
+    func offers() -> Children<Offer> {
+        return children()
     }
 }

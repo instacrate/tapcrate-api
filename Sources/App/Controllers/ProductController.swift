@@ -93,8 +93,8 @@ final class ProductController: ResourceRepresentable {
         if let expander: Expander = try request.extract() {
             return try Node.array(expander.expand(for: products, owner: "product", mappings: { (key, product) -> (NodeRepresentable?) in
                 switch key {
-                case "campaign":
-                    return try product.campaign().first()
+                case "offers":
+                    return try product.offers().all().makeNode()
                 case "tags":
                     return try product.tags().all().makeNode()
                 case "maker":
@@ -116,8 +116,8 @@ final class ProductController: ResourceRepresentable {
         if let expander: Expander = try request.extract() {
             return try expander.expand(for: product, owner: "product", mappings: { (key, product) -> (NodeRepresentable?) in
                 switch key {
-                case "campaign":
-                    return try product.campaign().first()
+                case "offers":
+                    return try product.offers().first()
                 case "tags":
                     return try product.tags().all().makeNode()
                 case "maker":
@@ -141,16 +141,23 @@ final class ProductController: ResourceRepresentable {
         var product: Product = try request.extractModel(injecting: request.makerInjectable())
         try product.save()
         result["product"] = try product.makeNode()
-        
-        if var campaignNode = request.json?.node["campaign"] {
-            campaignNode = try campaignNode.add(objects: ["maker_id" : request.maker().throwableId(), "product_id" : product.throwableId()])
-            var campaign: Campaign = try Campaign(node: campaignNode, in: EmptyNode)
-            try campaign.save()
-            
-            result["campaign"] = try campaign.makeNode()
+
+        guard let node = request.json?.node else {
+            return try result.makeNode().makeJSON()
+        }
+
+        if let offerNode = node["offers"]?.nodeArray {
+
+            let offers = try offerNode.map { (object: Node) -> Offer in
+                var offer: Offer = try Offer(node: object, in: product.throwableId().makeNode())
+                try offer.save()
+                return offer
+            }
+
+            result["offers"] = try offers.makeNode()
         }
         
-        if let node = request.json?.node, let tags: [Int] = try node.extract("tags") {
+        if let tags: [Int] = try node.extract("tags") {
         
             let tags = try tags.map { (id: Int) -> Tag? in
                 guard let tag = try Tag.find(id) else {
