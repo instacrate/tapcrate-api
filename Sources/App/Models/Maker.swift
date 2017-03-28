@@ -296,6 +296,27 @@ extension Maker: User {
             } else {
                 throw AuthError.invalidBasicAuthorization
             }
+
+        case let jwt as JWTCredentials:
+            guard let ruby = drop.config["servers", "default", "ruby"]?.string else {
+                throw Abort.custom(status: .internalServerError, message: "Missing path to ruby executable")
+            }
+
+            guard let result = shell(launchPath: ruby, arguments: drop.workDir + "identity/verifiy_identity.rb", jwt.token, jwt.subject, drop.workDir) else {
+                throw Abort.custom(status: .internalServerError, message: "Failed to decode token.")
+            }
+
+            drop.console.info("ruby result : \(result)")
+
+            guard result == "success" else {
+                throw AuthError.invalidCredentials
+            }
+
+            guard let _maker = try? Maker.query().filter("sub_id", jwt.subject).first(), let maker = _maker else {
+                throw AuthError.invalidCredentials
+            }
+            
+            return maker
             
         default:
             throw AuthError.unsupportedCredentials

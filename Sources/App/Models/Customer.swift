@@ -26,18 +26,24 @@ extension Stripe {
 
 final class Customer: Model, Preparation, JSONConvertible, Sanitizable {
     
-    static var permitted: [String] = ["email", "name", "default_shipping_id", "password"]
+    static var permitted: [String] = ["email", "name", "default_shipping_id"]
     
     var id: Node?
     var exists = false
     
     let name: String
     let email: String
-    let password: String
-    let salt: BCryptSalt
 
     var default_shipping_id: Node?
     var stripe_id: String?
+
+    var sub_id: String?
+
+    init(name: String, email: String, subject_id: String) {
+        self.name = name
+        self.email = email
+        sub_id = subject_id
+    }
     
     init(node: Node, in context: Context) throws {
         id = try? node.extract("id")
@@ -47,28 +53,18 @@ final class Customer: Model, Preparation, JSONConvertible, Sanitizable {
         email = try node.extract("email")
         name = try node.extract("name")
         stripe_id = try? node.extract("stripe_id")
-        
-        let password = try node.extract("password") as String
-         
-        if let salt = try? node.extract("salt") as String {
-            self.salt = try BCryptSalt(string: salt)
-            self.password = password
-        } else {
-            self.salt = try BCryptSalt(workFactor: 10)
-            self.password = try BCrypt.digest(password: password, salt: salt)
-        }
+        sub_id = try node.extract("sub_id")
     }
     
     func makeNode(context: Context = EmptyNode) throws -> Node {
         return try Node(node: [
             "name" : .string(name),
-            "email" : .string(email),
-            "password" : .string(password),
-            "salt" : .string(salt.string)
+            "email" : .string(email)
         ]).add(objects: [
             "id" : id,
             "stripe_id" : stripe_id,
-            "default_shipping_id" : default_shipping_id
+            "default_shipping_id" : default_shipping_id,
+            "sub_id" : sub_id
         ])
     }
     
@@ -86,9 +82,8 @@ final class Customer: Model, Preparation, JSONConvertible, Sanitizable {
             box.string("name")
             box.string("stripe_id", optional: true)
             box.string("email")
-            box.string("password")
-            box.string("salt")
             box.int("default_shipping_id", optional: true)
+            box.string("sub_id", optional: true)
         }
     }
     
@@ -127,21 +122,35 @@ extension Customer: User {
         
             return user
             
-        case let usernamePassword as UsernamePassword:
-            let query = try Customer.query().filter("email", usernamePassword.username)
-            
-            guard let user = try query.first() else {
+        case let jwt as JWTCredentials:
+            guard let ruby = drop.config["servers", "default", "ruby"]?.string else {
+                throw Abort.custom(status: .internalServerError, message: "Missing path to ruby executable")
+            }
+
+            guard let result = shell(launchPath: ruby, arguments: drop.workDir + "identity/verifiy_identity.rb", jwt.token, jwt.subject, drop.workDir) else {
+                throw Abort.custom(status: .internalServerError, message: "Failed to decode token.")
+            }
+
+            drop.console.info("ruby result : \(result)")
+
+            guard result == "success\n" else {
                 throw AuthError.invalidCredentials
             }
-            
-            if try user.password == BCrypt.digest(password: usernamePassword.password, salt: user.salt) {
+
+            if let _user = try? Customer.query().filter("sub_id", jwt.subject).first(), let user = _user {
                 return user
-            } else {
-                throw AuthError.invalidBasicAuthorization
             }
+
+            guard let providerData = jwt.providerData else {
+                throw AuthError.invalidCredentials
+            }
+
+            var user = Customer(name: providerData.displayName, email: providerData.email, subject_id: jwt.subject)
+            try user.save()
+            return user
             
         default:
-            throw AuthError.unsupportedCredentials
+            throw AuthError.invalidCredentials
         }
     }
     

@@ -12,36 +12,65 @@ import HTTP
 import Turnstile
 import Auth
 import Fluent
+import Routing
 
-final class AuthenticationController: ResourceRepresentable {
-    
-    func login(_ request: Request) throws -> ResponseRepresentable {
-        
-        let type = try request.extract() as SessionType
-        
-        guard let credentials = request.auth.header?.usernamePassword else {
-            throw AuthError.noAuthorizationHeader
-        }
-        
-        switch type {
-        case .customer:
-            try request.userSubject().login(credentials: credentials, persist: true)
-        case .maker:
-            try request.makerSubject().login(credentials: credentials, persist: true)
-        case .none:
-            throw Abort.custom(status: .badRequest, message: "Can not log in with a session type of none.")
-        }
-        
-        let modelSubject: JSONConvertible = type == .customer ? try request.customer() : try request.maker()
-        return try Response(status: .ok, json: modelSubject.makeJSON())
+func shell(launchPath: String, arguments: String...) -> String? {
+    let task = Process()
+    task.launchPath = launchPath
+    task.arguments = arguments
+
+    let pipe = Pipe()
+    task.standardOutput = pipe
+    task.standardError = pipe
+    task.launch()
+
+    task.waitUntilExit()
+
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    return String(data: data, encoding: .utf8)
+}
+
+final class ProviderData: NodeConvertible {
+
+    public let uid: String?
+    public let displayName: String
+    public let photoURL: String?
+    public let email: String
+    public let providerId: String?
+
+    init(node: Node, in context: Context = EmptyNode) throws {
+        uid = try node.extract("uid")
+        displayName = try node.extract("displayName")
+        photoURL = try node.extract("photoURL")
+        email = try node.extract("email")
+        providerId = try node.extract("providerId")
     }
-    
-    func makeResource() -> Resource<String> {
-        return Resource(
-            store: login
-        )
+
+    func makeNode(context: Context = EmptyNode) throws -> Node {
+        return try Node(node: [
+            "displayName" : .string(displayName),
+            "email" : .string(email),
+        ]).add(objects: [
+            "uid" : uid,
+            "photoURL" : photoURL,
+            "providerId" : providerId
+        ])
     }
 }
+
+final class JWTCredentials: Credentials {
+
+    public let token: String
+    public let subject: String
+    public let providerData: ProviderData?
+
+    public init(token: String, subject: String, providerData: Node?) throws {
+        self.token = token
+        self.subject = subject
+        self.providerData = try ProviderData(node: providerData)
+    }
+}
+
 
 extension Authorization {
     public var usernamePassword: UsernamePassword? {
@@ -63,6 +92,48 @@ extension Authorization {
         let password = decodedAuthString.substring(from: separatorRange.upperBound)
         
         return UsernamePassword(username: username, password: password)
+    }
+}
+
+extension JSON {
+
+    var jwt: JWTCredentials? {
+        guard let token = self["token"]?.string, let subject = self["subject"]?.string else {
+            return nil
+        }
+
+        let providerData = self["providerData"]?.node
+
+        return try? JWTCredentials(token: token, subject: subject, providerData: providerData)
+    }
+}
+
+final class AuthenticationCollection: RouteCollection {
+
+    typealias Wrapped = HTTP.Responder
+
+    func build<B: RouteBuilder>(_ builder: B) where B.Value == Wrapped {
+
+        builder.post("authentication") { request in
+
+            let type = try request.extract() as SessionType
+
+            guard let credentials: Credentials = request.auth.header?.usernamePassword ?? request.json?.jwt else {
+                throw AuthError.invalidCredentials
+            }
+
+            switch type {
+            case .customer:
+                try request.userSubject().login(credentials: credentials, persist: true)
+            case .maker:
+                try request.makerSubject().login(credentials: credentials, persist: true)
+            case .none:
+                throw Abort.custom(status: .badRequest, message: "Can not log in with a session type of none.")
+            }
+
+            let modelSubject: JSONConvertible = type == .customer ? try request.customer() : try request.maker()
+            return try Response(status: .ok, json: modelSubject.makeJSON())
+        }
     }
 }
 
