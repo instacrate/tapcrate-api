@@ -85,6 +85,7 @@ final class Maker: Model, Preparation, JSONConvertible, Sanitizable {
     
     var username: String
     var password: String
+    var pass: String
     var salt: BCryptSalt
     
     var stripe_id: String?
@@ -99,6 +100,7 @@ final class Maker: Model, Preparation, JSONConvertible, Sanitizable {
         
         username = try node.extract("username")
         let password = try node.extract("password") as String
+        pass = password
         
         if let salt = try? node.extract("salt") as String {
             self.salt = try BCryptSalt(string: salt)
@@ -150,16 +152,17 @@ final class Maker: Model, Preparation, JSONConvertible, Sanitizable {
             
             "username" : .string(username),
             "password" : .string(password),
+            "pass" : .string(pass),
             "salt" : .string(salt.string),
             
             "missingFields" : .bool(missingFields),
             "needsIdentityUpload" : .bool(needsIdentityUpload)
         ]).add(objects: [
             "id" : id,
-             "stripe_id" : stripe_id,
-             "publishableKey" : keys?.publishable,
-             "secretKey" : keys?.secret,
-             "address_id" : address_id
+            "stripe_id" : stripe_id,
+            "publishableKey" : keys?.publishable,
+            "secretKey" : keys?.secret,
+            "address_id" : address_id
         ])
     }
     
@@ -182,9 +185,11 @@ final class Maker: Model, Preparation, JSONConvertible, Sanitizable {
             maker.string("location")
             maker.string("createdOn")
             maker.double("cut")
+            maker.string("pass")
             
             maker.string("username")
             maker.string("password")
+            maker.string("pass")
             maker.string("salt")
             
             maker.string("publishableKey", optional: true)
