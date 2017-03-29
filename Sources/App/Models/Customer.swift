@@ -116,7 +116,7 @@ extension Customer: User {
         case let token as AccessToken:
             let session = try Session.session(forToken: token, type: .customer)
             
-            guard let user = try session.user().get() else {
+            guard let _user = try? session.user().first(), let user = _user else {
                 throw AuthError.invalidCredentials
             }
         
@@ -124,7 +124,7 @@ extension Customer: User {
             
         case let jwt as JWTCredentials:
             guard let ruby = drop.config["servers", "default", "ruby"]?.string else {
-                throw Abort.custom(status: .internalServerError, message: "Missing path to ruby executable")
+                throw Abort.custom(status: .internalServerError, message: "Missing path to ruby executable.")
             }
 
             guard let result = shell(launchPath: ruby, arguments: drop.workDir + "identity/verifiy_identity.rb", jwt.token, jwt.subject, drop.workDir) else {
