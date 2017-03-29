@@ -156,6 +156,17 @@ final class ProductController: ResourceRepresentable {
 
             result["offers"] = try offers.makeNode()
         }
+
+        if let pictureNode = node["pictures"]?.nodeArray {
+
+            let pictures = try pictureNode.map { (object: Node) -> ProductPicture in
+                var picture: ProductPicture = try ProductPicture(node: object, in: product.throwableId().makeNode())
+                try picture.save()
+                return picture
+            }
+
+            result["pictures"] = try pictures.makeNode()
+        }
         
         if let tags: [Int] = try node.extract("tags") {
         
