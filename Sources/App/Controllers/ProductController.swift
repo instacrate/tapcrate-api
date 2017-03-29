@@ -160,7 +160,7 @@ final class ProductController: ResourceRepresentable {
         if let pictureNode = node["pictures"]?.nodeArray {
 
             let pictures = try pictureNode.map { (object: Node) -> ProductPicture in
-                var picture: ProductPicture = try ProductPicture(node: object, in: product.throwableId().makeNode())
+                var picture: ProductPicture = try ProductPicture(node: object, in: OwnerContext(from: product) ?? EmptyNode)
                 try picture.save()
                 return picture
             }

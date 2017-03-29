@@ -35,7 +35,7 @@ final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
     
     init(node: Node, in context: Context) throws {
         id = node["id"]
-        product_id = node["product_id"] ?? (context as? Node)
+        product_id = node["product_id"] ?? (context as? OwnerContext)?.owner_id
         type = try node.extract("type")
         line_1 = try node.extract("line_1")
         line_2 = try node.extract("line_2")
