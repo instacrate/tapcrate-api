@@ -14,9 +14,9 @@ import Cache
 import Auth
 import Vapor
 
-private let cookieName = "maker-auth"
+private let cookieName = "tapcrate-maker-auth"
 private let storageName = "makerSubject"
-private let cookieTimeout: TimeInterval = 7 * 24 * 60 * 60
+private let cookieTimeout: Double = 7 * 24 * 60 * 60
 
 extension Request {
     
