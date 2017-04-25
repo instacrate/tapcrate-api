@@ -6,8 +6,8 @@
 //
 //
 
-import Foundation
 import Node
+import Foundation
 
 public final class Source: NodeConvertible {
     
@@ -26,10 +26,10 @@ public final class Source: NodeConvertible {
     public let type: String
     public let usage: Usage
     
-    public init(node: Node, in context: Context) throws {
+    public init(node: Node) throws {
         
         guard try node.extract("object") == Source.type else {
-            throw NodeError.unableToConvert(node: node, expected: Source.type)
+            throw NodeError.unableToConvert(input: node, expectation: Source.type, path: ["object"])
         }
         
         id = try node.extract("id")
@@ -46,7 +46,7 @@ public final class Source: NodeConvertible {
         usage = try node.extract("usage")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "id" : .string(id),
             "amount" : .number(.int(amount)),
@@ -55,11 +55,11 @@ public final class Source: NodeConvertible {
             "currency" : .string(currency.rawValue),
             "flow" : .string(flow.rawValue),
             "livemode" : .bool(livemode),
-            "owner" : owner.makeNode(),
+            "owner" : owner.makeNode(in: context),
             
             "status" : .string(status.rawValue),
             "type" : .string(type),
             "usage" : .string(usage.rawValue)
-        ] as [String : Node]).add(name: "receiver", node: receiver?.makeNode())
+        ] as [String : Node]).add(name: "receiver", node: receiver?.makeNode(in: context))
     }
 }

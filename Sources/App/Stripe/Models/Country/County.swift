@@ -6,7 +6,6 @@
 //
 //
 
-import Foundation
 import Node
 import Vapor
 
@@ -15,12 +14,12 @@ public final class VerificationRequirement: NodeConvertible {
     public let minimum: [String]
     public let additional: [String]
     
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         minimum = try node.extract("minimum")
         additional = try node.extract("additional")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "minimum" : .array(minimum.map { Node.string($0) } ),
             "additional" : .array(minimum.map { Node.string($0) } )
@@ -33,15 +32,15 @@ public final class CountryVerificationFields: NodeConvertible {
     public let individual: VerificationRequirement
     public let company: VerificationRequirement
 
-    public required init(node: Node, in context: Context = EmptyNode) throws {
+    public required init(node: Node) throws {
         individual = try node.extract("individual")
         company = try node.extract("company")
     }
 
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
-            "individual" : try individual.makeNode(),
-            "company" : try company.makeNode()
+            "individual" : try individual.makeNode(in: context),
+            "company" : try company.makeNode(in: context)
         ] as [String : Node])
     }
 }
@@ -297,7 +296,7 @@ public enum CountryCode: String, NodeConvertible {
     case zm
     case zw
 
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         guard let value = node.string else {
             throw Abort.custom(status: .internalServerError, message: "Expected \(String.self) for country code")
         }

@@ -6,23 +6,23 @@
 //
 //
 
-import Foundation
 import Node
+import Foundation
 
 public final class Period: NodeConvertible {
     
     public let start: Date
     public let end: Date
     
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         start = try node.extract("start")
         end = try node.extract("end")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
-            "start" : try start.makeNode(),
-            "end" : try end.makeNode()
+            "start" : try start.makeNode(in: context),
+            "end" : try end.makeNode(in: context)
             ] as [String : Node])
     }
 }
@@ -52,9 +52,9 @@ public final class LineItem: NodeConvertible {
     public let subscription_item: String
     public let type: LineItemType
     
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         guard try node.extract("object") == LineItem.type else {
-            throw NodeError.unableToConvert(node: node, expected: LineItem.type)
+            throw NodeError.unableToConvert(input: node, expectation: LineItem.type, path: ["object"])
         }
         
         id = try node.extract("id")
@@ -73,21 +73,21 @@ public final class LineItem: NodeConvertible {
         type = try node.extract("type")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "id" : .string(id),
             "amount" : .number(.int(amount)),
-            "currency" : try currency.makeNode(),
+            "currency" : try currency.makeNode(in: context),
             "discountable" : .bool(discountable),
             "livemode" : .bool(livemode),
             "metadata" : metadata,
-            "period" : try period.makeNode(),
-            "plan" : try plan.makeNode(),
+            "period" : try period.makeNode(in: context),
+            "plan" : try plan.makeNode(in: context),
             "proration" : .bool(proration),
             "quantity" : .number(.int(quantity)),
-            "subscription" : try subscription.makeNode(),
+            "subscription" : try subscription.makeNode(in: context),
             "subscription_item" : .string(subscription_item),
-            "type" : try type.makeNode()
+            "type" : try type.makeNode(in: context)
             ] as [String : Node]).add(objects: [
                 "description" : description
                 ])

@@ -6,8 +6,8 @@
 //
 //
 
-import Foundation
 import Node
+import Foundation
 
 public enum ReviewReason: String, NodeConvertible {
 
@@ -30,10 +30,10 @@ public final class StripeReview: NodeConvertible {
     public let open: Bool
     public let reason: ReviewReason
 
-    public required init(node: Node, in context: Context = EmptyNode) throws {
+    public required init(node: Node) throws {
 
         guard try node.extract("object") == StripeReview.type else {
-            throw NodeError.unableToConvert(node: node, expected: StripeReview.type)
+            throw NodeError.unableToConvert(input: node, expectation: StripeReview.type, path: ["object"])
         }
 
         id = try node.extract("id")
@@ -44,14 +44,14 @@ public final class StripeReview: NodeConvertible {
         reason = try node.extract("reason")
     }
 
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node : [
             "id" : .string(id),
             "charge" : .string(charge),
-            "created" : try created.makeNode(),
+            "created" : try created.makeNode(in: context),
             "livemode" : .bool(livemode),
             "open" : .bool(open),
-            "reason" : try reason.makeNode()
+            "reason" : try reason.makeNode(in: context)
         ] as [String : Node])
     }
 }

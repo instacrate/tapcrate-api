@@ -6,8 +6,8 @@
 //
 //
 
-import Foundation
 import Node
+import Foundation
 
 public final class Invoice: NodeConvertible {
     
@@ -44,9 +44,9 @@ public final class Invoice: NodeConvertible {
     public let total: Int
     public let webhooks_delivered_at: Date
     
-    public init(node: Node, in context: Context) throws {
+    public init(node: Node) throws {
         guard try node.extract("object") == Invoice.type else {
-            throw NodeError.unableToConvert(node: node, expected: Invoice.type)
+            throw NodeError.unableToConvert(input: node, expectation: Invoice.type, path: ["object"])
         }
         
         id = try node.extract("id")
@@ -81,7 +81,7 @@ public final class Invoice: NodeConvertible {
         webhooks_delivered_at = try node.extract("webhooks_delivered_at")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "id" : .string(id),
             "amount_due" : .number(.int(amount_due)),
@@ -89,22 +89,22 @@ public final class Invoice: NodeConvertible {
             "attempted" : .bool(attempted),
             "charge" : .string(charge),
             "closed" : .bool(closed),
-            "currency" : try currency.makeNode(),
+            "currency" : try currency.makeNode(in: context),
             "customer" : .string(customer),
-            "date" : try date.makeNode(),
-            "discount" : try discount.makeNode(),
+            "date" : try date.makeNode(in: context),
+            "discount" : try discount.makeNode(in: context),
             "forgiven" : .bool(forgiven),
-            "lines" : try .array(lines.map { try $0.makeNode() }),
+            "lines" : try .array(lines.map { try $0.makeNode(in: context) }),
             "livemode" : .bool(livemode),
             "metadata" : metadata,
-            "next_payment_attempt" : try next_payment_attempt.makeNode(),
+            "next_payment_attempt" : try next_payment_attempt.makeNode(in: context),
             "paid" : .bool(paid),
-            "period_end" : try period_end.makeNode(),
-            "period_start" : try period_start.makeNode(),
+            "period_end" : try period_end.makeNode(in: context),
+            "period_start" : try period_start.makeNode(in: context),
             "subscription" : .string(subscription),
             "subtotal" : .number(.int(subtotal)),
             "total" : .number(.int(total)),
-            "webhooks_delivered_at" : try webhooks_delivered_at.makeNode()
+            "webhooks_delivered_at" : try webhooks_delivered_at.makeNode(in: context)
         ] as [String: Node]).add(objects: [
             "application_fee" : application_fee,
             "description" : description,

@@ -6,15 +6,15 @@
 //
 //
 
-import Foundation
 import JSON
 import HTTP
 import Transport
 import Vapor
+import Foundation
 
-fileprivate func merge(query: [String: CustomStringConvertible?], with metadata: [String: CustomStringConvertible]) -> [String: CustomStringConvertible] {
+fileprivate func merge(query: [String: NodeRepresentable?], with metadata: [String: NodeRepresentable]) -> [String: NodeRepresentable] {
     let arguments = metadata.map { ("metadata[\($0)]", $1) }
-    var result: [String: CustomStringConvertible] = [:]
+    var result: [String: NodeRepresentable] = [:]
     
     arguments.forEach {
         result[$0] = $1
@@ -33,7 +33,8 @@ public final class Stripe {
 
     public static let shared = Stripe()
 
-    static var token = "sk_test_6zSrUMIQfOCUorVvFMS2LEzn"
+    static var token = "pk_test_lGLXGH2jjEx7KFtPmAYz39VA"
+    static var secret = "sk_test_WceGrEBqnYpjCYF6exFBXvnf"
     
     fileprivate let base = HTTPClient(urlString: "https://api.stripe.com/v1/")
     fileprivate let uploads = HTTPClient(urlString: "https://uploads.stripe.com/v1/")
@@ -42,11 +43,11 @@ public final class Stripe {
         return try base.post("tokens", query: ["card[number]" : 4242424242424242, "card[exp_month]" : 12, "card[exp_year]" : 2017, "card[cvc]" : 123])
     }
     
-    public func createToken(for customer: String, representing card: String, on account: String) throws -> Token {
+    public func createToken(for customer: String, representing card: String, on account: String = token) throws -> Token {
         return try base.post("tokens", query: ["customer" : customer, "card" : card], token: account)
     }
 
-    public func createNormalAccount(email: String, source: String, local_id: Int?, on account: String = token) throws -> StripeCustomer {
+    public func createNormalAccount(email: String, source: String, local_id: Int?, on account: String = secret) throws -> StripeCustomer {
         let defaultQuery = ["source" : source]
         let query = local_id.flatMap { merge(query: defaultQuery, with: ["id" : "\($0)"]) } ?? defaultQuery
 
@@ -54,13 +55,12 @@ public final class Stripe {
     }
 
     public func createManagedAccount(email: String, local_id: Int?) throws -> StripeAccount {
-        let defaultQuery: [String: CustomStringConvertible] = ["managed" : true, "country" : "US", "email" : email, "legal_entity[type]" : "company"]
+        let defaultQuery: [String: NodeRepresentable] = ["managed" : true, "country" : "US", "email" : email, "legal_entity[type]" : "company"]
         let query = local_id.flatMap { merge(query: defaultQuery, with: ["id" : "\($0)"]) } ?? defaultQuery
-        
-        return try base.post("accounts", query: query)
+        return try base.post("accounts", query: query, token: Stripe.secret)
     }
 
-    public func associate(source: String, withStripe id: String, under secretKey: String = Stripe.token) throws -> Card {
+    public func associate(source: String, withStripe id: String, under secretKey: String = Stripe.secret) throws -> Card {
         return try base.post("customers/\(id)/sources", query: ["source" : source], token: secretKey)
     }
 
@@ -73,30 +73,30 @@ public final class Stripe {
         return try base.post("customer/\(id)", query: parameters)
     }
 
-    public func subscribe(user userId: String, to planId: String, with frequency: Interval = .month, oneTime: Bool, cut: Double, coupon: String? = nil, metadata: [String : CustomStringConvertible], under publishableKey: String) throws -> StripeSubscription {
+    public func subscribe(user userId: String, to planId: String, with frequency: Interval = .month, oneTime: Bool, cut: Double, coupon: String? = nil, metadata: [String : NodeRepresentable], under publishableKey: String) throws -> StripeSubscription {
         let subscription: StripeSubscription = try base.post("subscriptions", query: merge(query: ["customer" : userId, "plan" : planId, "application_fee_percent" : cut, "coupon" : coupon], with: metadata), token: publishableKey)
 
         if oneTime {
             let json = try base.delete("/subscriptions/\(subscription.id)", query: ["at_period_end" : true])
 
             guard json["cancel_at_period_end"]?.bool == true else {
-                throw Abort.custom(status: .internalServerError, message: json.makeNode().nodeObject?.description ?? "Fuck.")
+                throw Abort.custom(status: .internalServerError, message: json.makeNode(in: emptyContext).object?.description ?? "Fuck.")
             }
         }
 
         return subscription
     }
     
-    public func charge(customer id: String, price: Double, fee percent: Double, on card: String, under account: String = token) throws -> Charge {
-        return try base.post("charges", query: ["amount" : price, "currency" : "USD", "application_fee" : price * percent, "card" : card, "customer" : id], token: account)
+    public func charge(source: String, for price: Double, withFee percent: Double, under account: String = Stripe.token) throws -> Charge {
+        return try base.post("charges", query: ["amount" : Int(price * 100), "currency" : "USD", "application_fee" : Int(price * percent * 100), "source" : source], token: account)
     }
     
     public func createCoupon(code: String) throws -> StripeCoupon {
         return try base.post("coupons", query: ["duration": Duration.once.rawValue, "id" : code, "percent_off" : 5, "max_redemptions" : 1])
     }
 
-    public func paymentInformation(for customer: String, under account: String = token) throws -> [Card] {
-        return try base.get("customers/\(customer)/sources", query: ["object" : "card"], token: account)
+    public func paymentInformation(for customer: String, under account: String = Stripe.secret) throws -> [Card] {
+        return try base.get_list("customers/\(customer)/sources", query: ["object" : "card"], token: account)
     }
 
     public func customerInformation(for customer: String) throws -> StripeCustomer {
@@ -108,7 +108,7 @@ public final class Stripe {
     }
     
     public func transfers(for secretKey: String) throws -> [Transfer] {
-        return try base.get("https://api.stripe.com/v1/transfers", token: secretKey)
+        return try base.get_list("transfers", token: secretKey)
     }
 
     public func delete(payment: String, from customer: String) throws -> JSON {
@@ -116,7 +116,7 @@ public final class Stripe {
     }
 
     public func disputes() throws -> [Dispute] {
-        return try base.get("disputes")
+        return try base.get_list("disputes")
     }
 
     public func verificationRequiremnts(for country: CountryCode) throws -> Country {
@@ -133,9 +133,5 @@ public final class Stripe {
     
     public func updateAccount(id: String, parameters: [String : String]) throws -> StripeAccount {
         return try base.post("accounts/\(id)", query: parameters)
-    }
-    
-    public func upload(file bytes: Bytes, with reason: UploadReason, type: FileType) throws -> FileUpload {
-        return try uploads.upload("files", name: "file", bytes: bytes)
     }
 }

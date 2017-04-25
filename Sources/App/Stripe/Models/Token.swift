@@ -6,8 +6,8 @@
 //
 //
 
-import Foundation
 import Node
+import Foundation
 
 public final class Token: NodeConvertible {
 
@@ -21,9 +21,9 @@ public final class Token: NodeConvertible {
     public let used: Bool
     public let card: Card
 
-    public required init(node: Node, in context: Context = EmptyNode) throws {
+    public required init(node: Node) throws {
         guard try node.extract("object") == Token.type else {
-            throw NodeError.unableToConvert(node: node, expected: Token.type)
+            throw NodeError.unableToConvert(input: node, expectation: Token.type, path: ["object"])
         }
 
         id = try node.extract("id")
@@ -35,15 +35,15 @@ public final class Token: NodeConvertible {
         card = try node.extract("card")
     }
 
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node : [
             "id" : .string(id),
             "client_ip" : .string(client_ip),
-            "created" : try created.makeNode(),
+            "created" : try created.makeNode(in: context),
             "livemode" : .bool(livemode),
             "type" : .string(type),
             "used" : .bool(used),
-            "card" : card.makeNode()
+            "card" : card.makeNode(in: context)
         ] as [String : Node])
     }
 }

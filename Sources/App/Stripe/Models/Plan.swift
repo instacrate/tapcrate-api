@@ -6,8 +6,8 @@
 //
 //
 
-import Foundation
 import Node
+import Foundation
 
 public enum Interval: String, NodeConvertible {
     case day = "daily"
@@ -31,10 +31,10 @@ public final class Plan: NodeConvertible {
     public let statement_descriptor: String?
     public let trial_period_days: Int?
     
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         
         guard try node.extract("object") == Plan.type else {
-            throw NodeError.unableToConvert(node: node, expected: Plan.type)
+            throw NodeError.unableToConvert(input: node, expectation: Plan.type, path: ["object"])
         }
         
         id = try node.extract("id")
@@ -45,11 +45,11 @@ public final class Plan: NodeConvertible {
         interval_count = try node.extract("interval_count")
         livemode = try node.extract("livemode")
         name = try node.extract("name")
-        statement_descriptor = try node.extract("statement_descriptor")
-        trial_period_days = try node.extract("trial_period_days")
+        statement_descriptor = try? node.extract("statement_descriptor")
+        trial_period_days = try? node.extract("trial_period_days")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "id" : .string(id),
             "amount" : .number(.int(amount)),

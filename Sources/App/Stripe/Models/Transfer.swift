@@ -6,8 +6,8 @@
 //
 //
 
-import Foundation
 import Node
+import Foundation
 
 public enum SourceType: String, NodeConvertible {
     
@@ -61,38 +61,38 @@ public final class Transfer: NodeConvertible {
     public let transfer_group: String?
     public let type: String
     
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         guard try node.extract("object") == Transfer.type else {
-            throw NodeError.unableToConvert(node: node, expected: Transfer.type)
+            throw NodeError.unableToConvert(input: node, expectation: Transfer.type, path: ["object"])
         }
         
         id = try node.extract("id")
         amount = try node.extract("amount")
         amount_reversed = try node.extract("amount_reversed")
-        application_fee = try node.extract("application_fee")
+        application_fee = try? node.extract("application_fee")
         balance_transaction = try node.extract("balance_transaction")
         created = try node.extract("created")
         currency = try node.extract("currency")
         date = try node.extract("date")
         description = try node.extract("description")
         destination = try node.extract("destination")
-        failure_code = try node.extract("failure_code")
-        failure_message = try node.extract("failure_message")
+        failure_code = try? node.extract("failure_code")
+        failure_message = try? node.extract("failure_message")
         livemode = try node.extract("livemode")
         metadata = try node.extract("metadata")
         method = try node.extract("method")
         recipient = try node.extract("recipient")
         reversals = try node.extract("reversals")
         reversed = try node.extract("reversed")
-        source_transaction = try node.extract("source_transaction")
+        source_transaction = try? node.extract("source_transaction")
         source_type = try node.extract("source_type")
-        statement_descriptor = try node.extract("statement_descriptor")
+        statement_descriptor = try? node.extract("statement_descriptor")
         status = try node.extract("status")
-        transfer_group = try node.extract("transfer_group")
+        transfer_group = try? node.extract("transfer_group")
         type = try node.extract("type")
     }
 
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "id" : id,
             "amount" : amount,

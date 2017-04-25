@@ -6,7 +6,6 @@
 //
 //
 
-import Foundation
 import Node
 import Vapor
 
@@ -36,7 +35,7 @@ public enum CountryType: String, NodeConvertible {
     case sg
     case us
     
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         guard let value = node.string else {
             throw Abort.custom(status: .internalServerError, message: "Expected \(String.self) for country code")
         }
@@ -60,10 +59,10 @@ public final class Country: NodeConvertible {
     public let supported_payment_methods: [String]
     public let verification_fields: CountryVerificationFields
     
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         
         guard try node.extract("object") == Country.type else {
-            throw NodeError.unableToConvert(node: node, expected: Country.type)
+            throw NodeError.unableToConvert(input: node, expectation: Country.type, path: ["object"])
         }
         
         id = try node.extract("id")
@@ -74,14 +73,14 @@ public final class Country: NodeConvertible {
         verification_fields = try node.extract("verification_fields")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
-            "id" : try id.makeNode(),
-            "default_currency" : try default_currency.makeNode(),
+            "id" : try id.makeNode(in: context),
+            "default_currency" : try default_currency.makeNode(in: context),
             "supported_bank_account_currencies" : supported_bank_account_currencies,
             "supported_payment_currencies" : .array(supported_payment_currencies.map { Node.string($0.rawValue) } ),
             "supported_payment_methods" : .array(supported_payment_methods.map { Node.string($0) } ),
-            "verification_fields" : verification_fields.makeNode()
+            "verification_fields" : verification_fields.makeNode(in: context)
         ] as [String : Node])
     }
 }

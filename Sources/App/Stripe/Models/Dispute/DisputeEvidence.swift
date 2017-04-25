@@ -6,7 +6,6 @@
 //
 //
 
-import Foundation
 import Node
 
 public final class DisputeEvidence: NodeConvertible {
@@ -39,7 +38,7 @@ public final class DisputeEvidence: NodeConvertible {
     public let uncategorized_file: String?
     public let uncategorized_text: String?
 
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
 
         access_activity_log = try node.extract("access_activity_log")
         billing_address = try node.extract("billing_address")
@@ -70,10 +69,8 @@ public final class DisputeEvidence: NodeConvertible {
         uncategorized_text = try node.extract("uncategorized_text")
     }
 
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
-        // TODO : Make init method that accepts optional values
-        
-        return try Node(node: [:]).add(objects: [
+    public func makeNode(in context: Context?) throws -> Node {
+        return try Node.object([:]).add(objects: [
             "access_activity_log" : access_activity_log,
             "billing_address" : billing_address,
             "cancellation_policy" : cancellation_policy,

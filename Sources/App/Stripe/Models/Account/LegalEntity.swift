@@ -6,7 +6,6 @@
 //
 //
 
-import Foundation
 import Node
 
 public enum LegalEntityVerificationStatus: String, NodeConvertible {
@@ -37,16 +36,16 @@ public final class LegalEntityIdentityVerification: NodeConvertible {
     public let details: String?
     public let details_code: LegalEntityVerificationFailureReason?
     
-    public required init(node: Node, in context: Context = EmptyNode) throws {
+    public required init(node: Node) throws {
         status = try node.extract("status")
-        document = try node.extract("document")
-        details = try node.extract("details")
-        details_code = try node.extract("details_code")
+        document = try? node.extract("document")
+        details = try? node.extract("details")
+        details_code = try? node.extract("details_code")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
-            "status" : try status.makeNode(),
+            "status" : try status.makeNode(in: context),
         ] as [String : Node]).add(objects: [
             "details" : details,
             "document" : document,
@@ -75,29 +74,29 @@ public final class LegalEntity: NodeConvertible {
     public let type: String?
     public let verification: LegalEntityIdentityVerification
     
-    public required init(node: Node, in context: Context = EmptyNode) throws {
+    public required init(node: Node) throws {
         address = try node.extract("address")
-        business_name = try node.extract("business_name")
+        business_name = try? node.extract("business_name")
         business_tax_id_provided = try node.extract("business_tax_id_provided")
         dob = try node.extract("dob")
-        first_name = try node.extract("first_name")
-        last_name = try node.extract("last_name")
+        first_name = try? node.extract("first_name")
+        last_name = try? node.extract("last_name")
         personal_address = try node.extract("personal_address")
         personal_id_number_provided = try node.extract("personal_id_number_provided")
         ssn_last_4_provided = try node.extract("ssn_last_4_provided")
-        type = try node.extract("type")
+        type = try? node.extract("type")
         verification = try node.extract("verification")
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
-            "address" : try address.makeNode(),
+            "address" : try address.makeNode(in: context),
             "business_tax_id_provided" : .bool(business_tax_id_provided),
-            "dob" : try dob.makeNode(),
-            "personal_address" : try personal_address.makeNode(),
+            "dob" : try dob.makeNode(in: context),
+            "personal_address" : try personal_address.makeNode(in: context),
             "personal_id_number_provided" : .bool(personal_id_number_provided),
             "ssn_last_4_provided" : .bool(ssn_last_4_provided),
-            "verification" : try verification.makeNode()
+            "verification" : try verification.makeNode(in: context)
         ] as [String : Node]).add(objects: [
             "business_name" : business_name,
             "first_name" : first_name,
@@ -116,16 +115,19 @@ public final class LegalEntity: NodeConvertible {
         case let field where field.hasPrefix("legal_entity.address"):
             switch field {
             case "legal_entity.address.city":
-                return ["name" : "City", "description" : "The city your business is registered in.", "key" : .string("\(field).city")]
+                return ["name" : "City", "description" : "The city your business is registered in.", "key" : .string(field)]
             case "legal_entity.address.line1":
-                return ["name" : "Address", "description" : "The address of your business.", "key" : .string("\(field).line1")]
+                return ["name" : "Address", "description" : "The address of your business.", "key" : .string(field)]
             case "legal_entity.address.postal_code":
-                return ["name" : "Postal Code", "description" : "The postal code your business is registered in.", "key" : .string("\(field).postal_code")]
+                return ["name" : "Postal Code", "description" : "The postal code your business is registered in.", "key" : .string(field)]
             case "legal_entity.address.state":
-                return ["name" : "State", "description" : "The state your business is registered in.", "key" : .string("\(field).state")]
+                return ["name" : "State", "description" : "The state your business is registered in.", "key" : .string(field)]
             default:
-                return ["name" : "", "description" : ""]
+                return ["name" : "", "description" : "", "key" : .string(field)]
             }
+
+        case let field where field.hasSuffix("document"):
+            return ["name" : "Identity Verification", "upload" : true, "upload_info" : Node.object(["url" : "https://uploads.stripe.com/v1/files", "purpose" : "identity_document", "api_key" : .string(Stripe.token)])]
             
         case "legal_entity.dob":
             return ["name" : "Date of Birth", "description" : "The date of birth for your company representative.", "key" : .string(field)]
@@ -136,12 +138,12 @@ public final class LegalEntity: NodeConvertible {
             return ["name" : "Last Name", "description": "The last name of your company representative.", "key" : .string(field)]
             
         case "legal_entity.ssn_last_4":
-            return ["name" : "Last 4 of Social Security number", "description" : "The last four digits of the compnay representative's SSN.", "key" : .string(field)]
+            return ["name" : "Last 4 of Social Security number", "description" : "The last four digits of the company representative's SSN.", "key" : .string(field)]
         case "legal_entity.type":
             return ["name" : "Always company.", "description" : "Always company", "key" : .string(field)]
 
         default:
-            return ["name" : "", "description" : "", "key" : ""]
+            return ["name" : "", "description" : "", "key" : .string(field)]
         }
     }
 }
