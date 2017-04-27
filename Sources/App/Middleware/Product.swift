@@ -8,77 +8,78 @@
 
 import Vapor
 import Fluent
-import Foundation
-import Sanitized
+import FluentProvider
 
-final class Product: Model, Preparation, JSONConvertible, Sanitizable {
+final class Product: Model, Preparation, JSONConvertible, NodeConvertible, Sanitizable {
     
-    static var permitted: [String] = ["name", "fullPrice", "shortDescription", "longDescription", "maker_id"]
+    let storage = Storage()
     
-    var id: Node?
+    static var permitted: [String] = ["name", "fullPrice", "shortDescription", "longDescription", "maker_id", "created"]
+    
+    var id: Identifier?
     var exists = false
     
     let name: String
     let fullPrice: Double
     let shortDescription: String
     let longDescription: String
+    let created: Date
     
-    let maker_id: Node?
+    let maker_id: Identifier
     
-    init(node: Node, in context: Context) throws {
-        id = node["id"]
+    init(node: Node) throws {
+        id = try? node.extract("id")
         
         name = try node.extract("name")
         fullPrice = try node.extract("fullPrice")
         shortDescription = try node.extract("shortDescription")
         longDescription = try node.extract("longDescription")
+        created = (try? node.extract("created")) ?? Date()
         
-        maker_id = node["maker_id"]
+        maker_id = try node.extract("maker_id")
     }
     
-    func makeNode(context: Context) throws -> Node {
+    func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "name" : .string(name),
             "fullPrice" : .number(.double(fullPrice)),
             "shortDescription" : .string(shortDescription),
-            "longDescription" : .string(longDescription)
-        ]).add(objects: [
-            "id" : id,
-            "maker_id" : maker_id
-        ])
+            "longDescription" : .string(longDescription),
+            "created" : .date(created)
+            ]).add(objects: [
+                "id" : id,
+                "maker_id" : maker_id
+                ])
     }
     
     static func prepare(_ database: Database) throws {
-        try database.create(self.entity) { product in
+        try database.create(Product.self) { product in
             product.id()
             product.string("name")
             product.double("fullPrice")
             product.string("shortDescription")
             product.string("longDescription")
+            product.string("created")
             product.parent(Maker.self)
         }
     }
     
     static func revert(_ database: Database) throws {
-        try database.delete(self.entity)
+        try database.delete(Product.self)
     }
 }
 
 extension Product {
     
-    func maker() throws -> Parent<Maker> {
-        return try parent(maker_id)
+    func maker() -> Parent<Product, Maker> {
+        return parent(id: maker_id)
     }
     
-    func tags() throws -> Siblings<Tag> {
-        return try siblings()
+    func tags() -> Siblings<Product, Tag, Pivot<Product, Tag>> {
+        return siblings()
     }
     
-    func pictures() -> Children<ProductPicture> {
-        return children("owner_id", ProductPicture.self)
-    }
-
-    func offers() -> Children<Offer> {
+    func pictures() -> Children<Product, ProductPicture> {
         return children()
     }
 }

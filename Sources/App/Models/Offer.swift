@@ -6,10 +6,10 @@
 //
 //
 
-import Foundation
 import Vapor
 import Fluent
-import Sanitized
+import FluentProvider
+import Node
 
 enum OfferType: String, NodeConvertible {
     case free
@@ -17,7 +17,9 @@ enum OfferType: String, NodeConvertible {
     case deal
 }
 
-final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
+final class Offer: Model, Preparation, JSONConvertible, NodeConvertible, Sanitizable {
+
+    let storage = Storage()
     
     static var permitted: [String] = ["type", "product_id", "line_1", "line_2", "expiration", "code"]
     
@@ -31,24 +33,30 @@ final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
     let expiration: Date
     let code: String
 
-    var product_id: Node?
+    var product_id: Identifier
     
     init(node: Node, in context: Context) throws {
         id = node["id"]
-        product_id = node["product_id"] ?? (context as? OwnerContext)?.owner_id
+        
         type = try node.extract("type")
         line_1 = try node.extract("line_1")
         line_2 = try node.extract("line_2")
         expiration = try node.extract("expiration")
         code = try node.extract("code")
+        
+        if let context: ParentContext = node.context as? ParentContext {
+            product_id = context.parent_id
+        } else {
+            product_id = try node.extract("product_id")
+        }
     }
     
     func makeNode(context: Context) throws -> Node {
         return try Node(node: [
-            "type" : try type.makeNode(),
+            "type" : try type.makeNode(in: emptyContext),
             "line_1" : .string(line_1),
             "line_2" : .string(line_2),
-            "expiration" : try expiration.makeNode(),
+            "expiration" : try expiration.makeNode(in: emptyContext),
             "code" : .string(code)
         ]).add(objects: [
             "id" : id,
@@ -57,7 +65,7 @@ final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
     }
     
     static func prepare(_ database: Database) throws {
-        try database.create(self.entity, closure: { offer in
+        try database.create(Offer.self) { offer in
             offer.id()
             offer.string("type")
             offer.string("line_1")
@@ -65,17 +73,10 @@ final class Offer: Model, Preparation, JSONConvertible, Sanitizable {
             offer.string("expiration")
             offer.string("code")
             offer.parent(Product.self)
-        })
+        }
     }
     
     static func revert(_ database: Database) throws {
-        try database.delete(self.entity)
-    }
-}
-
-extension Offer {
-    
-    func product() throws -> Parent<Product> {
-        return try parent(product_id)
+        try database.delete(Offer.self)
     }
 }

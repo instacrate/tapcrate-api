@@ -7,20 +7,61 @@
 //
 
 import Fluent
+import FluentProvider
 import Vapor
+import HTTP
 
-extension Array where Element : NodeRepresentable {
+extension Model where Self: NodeConvertible {
     
-    public func makeJSON() throws -> JSON {
-        let node = try Node.array(self.map { try $0.makeNode() })
-        return try JSON(node: node)
+    public init(row: Row) throws {
+        try self.init(node: Node(row.wrapped, in: nil))
+    }
+    
+    public func makeRow() throws -> Row {
+        return try Row(self.makeNode(in: rowContext).wrapped, in: rowContext)
     }
 }
 
-extension Array where Element : NodeInitializable {
+extension Model where Self: NodeConvertible {
     
     public init(json: JSON) throws {
-        let node = json.makeNode()
-        try self.init(node: node)
+        try self.init(node: Node(json.wrapped, in: nil))
+    }
+    
+    public func makeJSON() throws -> JSON {
+        return try JSON(self.makeNode(in: jsonContext).wrapped)
+    }
+}
+
+extension Model where Self: NodeConvertible {
+    
+    func makeResponse() throws -> Response {
+        return try Response(status: .ok, json: JSON(self.makeNode(in: jsonContext)))
+    }
+}
+
+func serialize<R: StructuredDataWrapper>(_ _array: [Int]?, in _context: Context?) throws -> R {
+    guard let array = _array else {
+        return R(.array([]), in: emptyContext)
+    }
+    
+    if let context = _context, context.isRow {
+        let serialized = try JSON(node: array).serialize().string()
+        return R(.string(serialized), in: emptyContext)
+    } else {
+        return try R(Node(node: array, in: emptyContext).wrapped, in: emptyContext)
+    }
+}
+
+func serialize<R: StructuredDataWrapper>(_ _array: [String]?, in _context: Context?) throws -> R {
+    guard let array = _array else {
+        return R(.array([]), in: emptyContext)
+    }
+    
+    if let context = _context, context.isRow {
+        let serialized = try JSON(node: array).serialize().string()
+        return R(.string(serialized), in: emptyContext)
+    } else {
+        return try R(Node(node: array, in: emptyContext).wrapped, in: emptyContext)
     }
 }

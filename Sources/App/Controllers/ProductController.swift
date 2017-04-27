@@ -6,12 +6,10 @@
 //
 //
 
-import Foundation
 import Vapor
-import enum HTTP.Method
 import HTTP
 import Fluent
-import Sanitized
+import FluentProvider
 
 typealias Pair = (Hashable, Any)
 
@@ -25,87 +23,141 @@ func merge<K: Hashable, V>(keys: [K], with values: [V]) -> [K: V] {
     return dictionary
 }
 
-struct Expander: QueryInitializable {
+enum Sort: String, TypesafeOptionsParameter {
+
+    case alpha
+    case price
+    case new
+    case none
     
-    static var key: String = "expand"
+    static let key = "sort"
+    static let values = [Sort.alpha.rawValue, Sort.new.rawValue, Sort.price.rawValue, Sort.none.rawValue]
+    static let defaultValue: Sort? = Sort.none
+    
+    var field: String {
+        switch self {
+        case .alpha:
+            return "name"
+        case .price:
+            return "fullPrice"
+        case .new:
+            // TODO : hacky
+            return "id"
+        case .none:
+            return ""
+        }
+    }
+    
+    func modify<T : Entity>(_ query: Query<T>) throws -> Query<T> {
+        if self == .none {
+            return query
+        }
+        
+        return try query.sort(field, .ascending)
+    }
+}
+
+struct Expander<T: Model & NodeConvertible>: QueryInitializable {
+    
+    static var key: String {
+        return "expand"
+    }
     
     let expandKeyPaths: [String]
     
-    init(node: Node, in context: Context) throws {
+    init(node: Node) throws {
         expandKeyPaths = node.string?.components(separatedBy: ",") ?? []
     }
     
-    func expand<T: Model>(for models: [T], owner key: String, mappings: @escaping (String, T) throws -> (NodeRepresentable?)) throws -> [Node] {
-        return try models.map { (model: T) -> Node in
-            var valueMappings = try expandKeyPaths.map { relation in
-                return try mappings(relation, model)?.makeNode() ?? Node.null
-            }
-            
-            var keyPaths = expandKeyPaths
-            
-            keyPaths.append(key)
-            try valueMappings.append(model.makeNode())
-            
-            return try merge(keys: keyPaths, with: valueMappings).makeNode()
+    func expand(for models: [T], mappings: @escaping (String, [T], [Node]) throws -> [NodeRepresentable]) throws -> Node {
+        let ids = models.map { $0.id!.makeNode(in: jsonContext) }
+        
+        let relationships = try expandKeyPaths.map { relation in
+            return try (relation, mappings(relation, models, ids))
         }
+        
+        var result: [Node] = []
+        
+        for owner in models {
+            try result.append(.object([T.name : owner.makeNode(in: jsonContext)]))
+        }
+        
+        for (key, relations) in relationships {
+            for (index, relation) in relations.enumerated() {
+                try result[index].set(key, relation.makeNode(in: jsonContext))
+            }
+        }
+        
+        return Node.array(result).makeNode(in: jsonContext)
     }
     
-    func expand<T: Model>(for model: T, owner key: String, mappings: @escaping (String, T) throws -> (NodeRepresentable?)) throws -> Node {
-        var valueMappings = try expandKeyPaths.map { relation in
-            return try mappings(relation, model)?.makeNode() ?? Node.null
-        }
-        
-        var keyPaths = expandKeyPaths
-        
-        keyPaths.append(key)
-        try valueMappings.append(model.makeNode())
-        
-        return try merge(keys: keyPaths, with: valueMappings).makeNode()
+    func expand(for model: T, mappings: @escaping (String, [T], [Node]) throws -> [NodeRepresentable]) throws -> Node {
+        return try expand(for: [model] as [T], mappings: mappings).array!.first!
     }
 }
 
 extension Product {
     
     func shouldAllow(request: Request) throws {
+        
         guard let maker = try? request.maker() else {
-            throw try Abort.custom(status: .forbidden, message: "Method \(request.method) is not allowed on resource Product(\(throwableId())) by this user. Must be logged in as Maker(\(maker_id?.int ?? 0)).")
+            throw try Abort.custom(status: .forbidden, message: "Method \(request.method) is not allowed on resource Product(\(throwableId())) by this user. Must be logged in as Maker(\(maker_id.int ?? 0)).")
         }
         
-        guard try maker.throwableId() == maker_id?.int else {
-            throw try Abort.custom(status: .forbidden, message: "This Maker(\(maker.throwableId()) does not have access to resource Product(\(throwableId()). Must be logged in as Maker(\(maker_id?.int ?? 0).")
+        guard try maker.throwableId() == maker_id.int else {
+            throw try Abort.custom(status: .forbidden, message: "This Maker(\(maker.throwableId()) does not have access to resource Product(\(throwableId()). Must be logged in as Maker(\(maker_id.int ?? 0).")
         }
     }
+}
+
+public struct ParentContext: Context {
+    
+    public let parent_id: Identifier
 }
 
 final class ProductController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
         
+        let sort = try request.extract() as Sort
+        
         let products = try { () -> [Product] in
             if let maker = request.query?["maker"]?.bool, maker {
                 let maker = try request.maker()
-                return try maker.products().all()
+                return try sort.modify(maker.products().makeQuery()).all()
             }
             
-            return try Product.all()
-        }()
+            return try sort.modify(Product.makeQuery()).all()
+            }()
         
-        if let expander: Expander = try request.extract() {
-            return try Node.array(expander.expand(for: products, owner: "product", mappings: { (key, product) -> (NodeRepresentable?) in
+        if products.count == 0 {
+            return try Node.array([]).makeResponse()
+        }
+        
+        if let expander: Expander<Product> = try request.extract() {
+            return try expander.expand(for: products) { (key, products, identifiers) -> [NodeRepresentable] in
                 switch key {
-                case "offers":
-                    return try product.offers().all().makeNode()
                 case "tags":
-                    return try product.tags().all().makeNode()
+                    return try products.map {
+                        try $0.tags().all().makeNode(in: jsonContext)
+                    }
                 case "maker":
-                    return try product.maker().first()
+                    let makerIds = products.map { $0.maker_id.makeNode(in: jsonContext) }
+                    let makers = try Maker.makeQuery().filter(.subset(Maker.idKey, .in, makerIds)).all()
+                    
+                    return try makerIds.map { id in
+                        try makers.filter { try $0.id.makeNode(in: emptyContext) == id }.first
+                    }
                 case "pictures":
-                    return try product.pictures().all().makeNode()
+                    let pictures = try ProductPicture.makeQuery().filter(.subset(Product.foreignIdKey, .in, identifiers)).all()
+                    
+                    return try identifiers.map { id in
+                        try pictures.filter { try $0.product_id == id.converted(in: emptyContext) }
+                    }
                 default:
-                    Droplet.logger?.warning("Could not find expansion for \(key) on ProductController.")
-                    return nil
+                    throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
                 }
-            })).makeJSON()
+                }.makeResponse()
         }
         
         return try products.makeJSON()
@@ -113,78 +165,70 @@ final class ProductController: ResourceRepresentable {
     
     func show(_ request: Request, product: Product) throws -> ResponseRepresentable {
         
-        if let expander: Expander = try request.extract() {
-            return try expander.expand(for: product, owner: "product", mappings: { (key, product) -> (NodeRepresentable?) in
+        if let expander: Expander<Product> = try request.extract() {
+            return try expander.expand(for: product, mappings: { (key, products, identifiers) -> [NodeRepresentable] in
                 switch key {
-                case "offers":
-                    return try product.offers().all().makeNode()
                 case "tags":
-                    return try product.tags().all().makeNode()
+                    return try [products[0].tags().all().makeNode(in: jsonContext)]
                 case "maker":
-                    return try product.maker().first()
+                    return try products[0].maker().limit(1).all()
                 case "pictures":
-                    return try product.pictures().all().makeNode()
+                    return try [products[0].pictures().all().makeNode(in: jsonContext)]
                 default:
-                    Droplet.logger?.warning("Could not find expansion for \(key) on ProductController.")
-                    return nil
+                    fatalError("Could not find expansion for \(key) on ProductController.")
                 }
-            }).makeJSON()
+            }).makeResponse()
         }
         
-        return product
+        return try product.makeResponse()
     }
     
     func create(_ request: Request) throws -> ResponseRepresentable {
         let _ = try request.maker()
         var result: [String : Node] = [:]
         
-        var product: Product = try request.extractModel(injecting: request.makerInjectable())
+        let product: Product = try request.extractModel(injecting: request.makerInjectable())
         try product.save()
-        result["product"] = try product.makeNode()
-
+        
+        guard let product_id = product.id else {
+            throw Abort.custom(status: .internalServerError, message: "Failed to save product.")
+        }
+        
+        result["product"] = try product.makeNode(in: emptyContext)
+        
         guard let node = request.json?.node else {
-            return try result.makeNode().makeJSON()
+            return try JSON(result.makeNode(in: jsonContext))
         }
-
-        if let offerNode = node["offers"]?.nodeArray {
-
-            let offers = try offerNode.map { (object: Node) -> Offer in
-                var offer: Offer = try Offer(node: object, in: product.throwableId().makeNode())
-                try offer.save()
-                return offer
-            }
-
-            result["offers"] = try offers.makeNode()
-        }
-
-        if let pictureNode = node["pictures"]?.nodeArray {
-
+        
+        if let pictureNode: [Node] = try? node.extract("pictures") {
+            
             let pictures = try pictureNode.map { (object: Node) -> ProductPicture in
-                var picture: ProductPicture = try ProductPicture(node: object, in: OwnerContext(from: product) ?? EmptyNode)
+                let context = ParentContext(parent_id: product_id)
+                let picture: ProductPicture = try ProductPicture(node: Node(object.permit(ProductPicture.permitted).wrapped, in: context))
                 try picture.save()
                 return picture
             }
-
-            result["pictures"] = try pictures.makeNode()
+            
+            result["pictures"] = try pictures.makeNode(in: emptyContext)
         }
         
-        if let tags: [Int] = try node.extract("tags") {
-        
+        if let tags: [Int] = try? node.extract("tags") {
+            
             let tags = try tags.map { (id: Int) -> Tag? in
                 guard let tag = try Tag.find(id) else {
                     return nil
                 }
                 
-                var pivot = Pivot<Tag, Product>(tag, product)
+                let pivot = try Pivot<Tag, Product>(tag, product)
                 try pivot.save()
                 
                 return tag
-            }.flatMap { $0 }
+                }.flatMap { $0 }
             
-            result["tags"] = try tags.makeNode()
+            result["tags"] = try tags.makeNode(in: emptyContext)
         }
         
-        return try result.makeNode().makeJSON()
+        return try JSON(result.makeNode(in: jsonContext))
     }
     
     func delete(_ request: Request, product: Product) throws -> ResponseRepresentable {
@@ -197,7 +241,7 @@ final class ProductController: ResourceRepresentable {
     func modify(_ request: Request, product: Product) throws -> ResponseRepresentable {
         try product.shouldAllow(request: request)
         
-        var product: Product = try request.patchModel(product)
+        let product: Product = try request.patchModel(product)
         try product.save()
         return try Response(status: .ok, json: product.makeJSON())
     }

@@ -3,22 +3,12 @@
     "client": "engine",
     "console": "terminal",
     "log": "console",
-    "hash": "crypto",
-    "cipher": "crypto",
-    "middleware": {
-        "server": [
-            "file",
-            "customAbort",
-            "validation",
-            "type-safe",
-            "date",
-            "sessions",
-            "logger",
-            "makerAuth",
-            "customerAuth"
-        ],
-        "client": [
-        
-        ]
-    }
+    "hash": "bcrypt",
+    "cipher": "bcrypt",
+    "cache" : "mysql-cache",
+    "middleware" : [
+                    "file",
+                    "fluent-sessions",
+                    "error"
+                    ]
 }

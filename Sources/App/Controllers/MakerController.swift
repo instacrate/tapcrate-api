@@ -6,11 +6,9 @@
 //
 //
 
-import Foundation
 import Vapor
 import HTTP
-import Turnstile
-import Auth
+import AuthProvider
 
 extension Maker {
     
@@ -18,7 +16,7 @@ extension Maker {
         guard let maker = try? request.maker() else {
             throw try Abort.custom(status: .forbidden, message: "Method \(request.method) is not allowed on resource Maker(\(throwableId())) by this user. Must be logged in as Maker(\(throwableId())).")
         }
-
+        
         guard try maker.throwableId() == throwableId() else {
             throw try Abort.custom(status: .forbidden, message: "This Maker(\(maker.throwableId()) does not have access to resource Maker(\(throwableId()). Must be logged in as Maker(\(throwableId()).")
         }
@@ -26,7 +24,7 @@ extension Maker {
 }
 
 final class MakerController: ResourceRepresentable {
-
+    
     func index(_ request: Request) throws -> ResponseRepresentable {
         return try request.maker().makeJSON()
     }
@@ -37,25 +35,32 @@ final class MakerController: ResourceRepresentable {
     }
     
     func create(_ request: Request) throws -> ResponseRepresentable {
-        var maker: Maker = try request.extractModel()
+        let maker: Maker = try request.extractModel()
+        
+        if try Maker.makeQuery().filter("username", maker.username).count() > 0 {
+            throw Abort.custom(status: .badRequest, message: "Username is taken.")
+        }
+        
         try maker.save()
         
-        let node = try request.json().node
-        let username: String = try node.extract("username")
-        let password: String = try node.extract("password")
+        request.auth.authenticate(maker)
         
-        let usernamePassword = UsernamePassword(username: username, password: password)
-        try request.makerSubject().login(credentials: usernamePassword, persist: true)
+        //        let account = try Stripe.shared.createManagedAccount(email: maker.contactEmail, local_id: maker.id?.int)
         
-        return maker
+        //        maker.stripe_id = account.id
+        //        maker.keys = account.keys
+        //        try maker.save()
+        
+        return try maker.makeResponse()
     }
-
+    
     func modify(_ request: Request, maker: Maker) throws -> ResponseRepresentable {
         try maker.shouldAllow(request: request)
         
-        var maker: Maker = try request.patchModel(maker)
+        let maker: Maker = try request.patchModel(maker)
         try maker.save()
-        return try Response(status: .ok, json: maker.makeJSON())
+        
+        return try maker.makeResponse()
     }
     
     func makeResource() -> Resource<Maker> {
@@ -67,4 +72,4 @@ final class MakerController: ResourceRepresentable {
         )
     }
 }
-    
+

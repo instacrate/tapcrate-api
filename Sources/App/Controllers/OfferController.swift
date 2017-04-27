@@ -14,20 +14,20 @@ import Fluent
 final class OfferController: ResourceRepresentable {
 
     func create(_ request: Request) throws -> ResponseRepresentable {
-        var tag: Offer = try request.extractModel()
-        try tag.save()
-        return tag
+        let offer: Offer = try request.extractModel()
+        try offer.save()
+        return try offer.makeJSON().makeResponse()
     }
 
-    func delete(_ request: Request, tag: Offer) throws -> ResponseRepresentable {
-        try tag.delete()
+    func delete(_ request: Request, offer: Offer) throws -> ResponseRepresentable {
+        try offer.delete()
         return Response(status: .noContent)
     }
 
-    func modify(_ request: Request, tag: Offer) throws -> ResponseRepresentable {
-        var tag: Offer = try request.patchModel(tag)
-        try tag.save()
-        return try Response(status: .ok, json: tag.makeJSON())
+    func modify(_ request: Request, offer: Offer) throws -> ResponseRepresentable {
+        let offer: Offer = try request.patchModel(offer)
+        try offer.save()
+        return try Response(status: .ok, json: offer.makeJSON())
     }
 
     func makeResource() -> Resource<Offer> {

@@ -6,70 +6,65 @@
 //
 //
 
-import Foundation
 import Vapor
 import Sessions
-import VaporMySQL
+import MySQLProvider
 import Fluent
-import Auth
-import Turnstile
+import FluentProvider
 import HTTP
 import Console
+import MySQLProvider
+import AuthProvider
+import Sessions
 
-extension SessionsMiddleware {
+final class FluentCacheProvider: Vapor.Provider {
+
+    static let repositoryName = "tapcrate-fluent-cache"
     
-    class func createSessionsMiddleware() -> SessionsMiddleware {
-        let memory = MemorySessions()
-        return SessionsMiddleware(sessions: memory)
+    public init(config: Config) throws { }
+    
+    func boot(_ config: Config) throws { }
+    func boot(_ droplet: Droplet) throws { }
+    
+    public func beforeRun(_ drop: Droplet) {
+        if let database = drop.database {
+            drop.config.addConfigurable(cache: { _ in MySQLCache(database) }, name: "mysql-cache")
+            drop.config.addConfigurable(middleware: { _ in SessionsMiddleware(CacheSessions(drop.cache)) }, name: "fluent-sessions")
+        }
     }
 }
 
 extension Droplet {
     
-    static var instance: Droplet?
-    static var logger: LogProtocol?
-    
     internal static func create() -> Droplet {
         
-        let drop = Droplet()
-        
-        Droplet.instance = drop
-        Droplet.logger = drop.log.self
-        
         do {
-            try drop.addProvider(VaporMySQL.Provider.self)
+            let drop = try Droplet()
+            
+            try drop.config.addProvider(AuthProvider.Provider.self)
+            try drop.config.addProvider(MySQLProvider.Provider.self)
+            try drop.config.addProvider(FluentCacheProvider.self)
+            
+            drop.database?.log = { query in
+                print("query : \(query)")
+            }
+            
+            drop.config.preparations = [Product.self,
+                                        Maker.self,
+                                        CustomerAddress.self,
+                                        Customer.self,
+                                        StripeMakerCustomer.self,
+                                        MakerAddress.self,
+                                        Pivot<Tag, Product>.self,
+                                        MakerPicture.self,
+                                        CustomerPicture.self,
+                                        ProductPicture.self,
+                                        Tag.self,
+                                        Offer.self]
+            
+            return drop
         } catch {
-            logger?.fatal("failed to add vapor provider \(error)")
-        }
-        
-        drop.addConfigurable(middleware: SessionsMiddleware.createSessionsMiddleware(), name: "sessions")
-        drop.addConfigurable(middleware: CustomerAuthMiddleware(), name: "customerAuth")
-        drop.addConfigurable(middleware: MakerAuthMiddleware(), name: "makerAuth")
-        drop.addConfigurable(middleware: LoggingMiddleware(), name: "logger")
-        drop.addConfigurable(middleware: CustomAbortMiddleware(), name: "customAbort")
-        
-        var remainingMiddleare = drop.middleware.filter { !($0 is FileMiddleware) }
-        
-        if let fileMiddleware = drop.middleware.filter({ $0 is FileMiddleware }).first {
-            remainingMiddleare.append(fileMiddleware)
-        }
-        
-        drop.middleware = remainingMiddleare
-        
-        let preparations: [Preparation.Type] = [Product.self, Maker.self, CustomerAddress.self, Customer.self, Session.self, StripeMakerCustomer.self, MakerAddress.self, QuestionSection.self, Pivot<Tag, Product>.self, MakerPicture.self, CustomerPicture.self, ProductPicture.self, Tag.self, Offer.self]
-        drop.preparations.append(contentsOf: preparations)
-        
-        return drop
-    }
-    
-    static let userProtect = CustomerProtectMiddleware()
-    static let makerProtect = MakerProtectMiddleware()
-    
-    static func protect(_ type: SessionType) -> Middleware {
-        switch type {
-        case .customer: return userProtect
-        case .maker: return makerProtect
-        case .none: return userProtect
+            fatalError("Failed to start with error \(error)")
         }
     }
 }

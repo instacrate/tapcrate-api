@@ -6,48 +6,50 @@
 //
 //
 
-import Foundation
 import Vapor
 import Fluent
-import Sanitized
+import FluentProvider
+import Node
 
-final class Tag: Model, Preparation, JSONConvertible, Sanitizable {
+final class Tag: Model, Preparation, JSONConvertible, NodeConvertible, Sanitizable {
+    
+    let storage = Storage()
     
     static var permitted: [String] = ["name"]
     
-    var id: Node?
+    var id: Identifier?
     var exists = false
     
     let name: String
     
-    init(node: Node, in context: Context) throws {
-        id = node["id"]
+    init(node: Node) throws {
+        id = try? node.extract("id")
         name = try node.extract("name")
     }
     
-    func makeNode(context: Context) throws -> Node {
+    func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "name" : name
-        ]).add(objects: [
-            "id" : id
-        ])
+            ]).add(objects: [
+                "id" : id
+                ])
     }
     
     static func prepare(_ database: Database) throws {
-        try database.create(self.entity, closure: { answer in
-            answer.id()
-            answer.string("name")
-        })
+        try database.create(Tag.self) { tag in
+            tag.id()
+            tag.string("name")
+        }
     }
     
     static func revert(_ database: Database) throws {
-        try database.delete(self.entity)
+        try database.delete(Tag.self)
     }
 }
 
 extension Tag {
     
-    func products() throws -> Siblings<Product> {
-        return try siblings()
+    func products() -> Siblings<Tag, Product, Pivot<Tag, Product>> {
+        return siblings()
     }
 }

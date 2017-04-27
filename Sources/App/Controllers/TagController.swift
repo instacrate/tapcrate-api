@@ -22,9 +22,9 @@ final class TagController: ResourceRepresentable {
     }
     
     func create(_ request: Request) throws -> ResponseRepresentable {
-        var tag: Tag = try request.extractModel()
+        let tag: Tag = try request.extractModel()
         try tag.save()
-        return tag
+        return try tag.makeResponse()
     }
     
     func delete(_ request: Request, tag: Tag) throws -> ResponseRepresentable {
@@ -33,7 +33,7 @@ final class TagController: ResourceRepresentable {
     }
     
     func modify(_ request: Request, tag: Tag) throws -> ResponseRepresentable {
-        var tag: Tag = try request.patchModel(tag)
+        let tag: Tag = try request.patchModel(tag)
         try tag.save()
         return try Response(status: .ok, json: tag.makeJSON())
     }

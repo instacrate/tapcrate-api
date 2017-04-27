@@ -6,42 +6,61 @@
 //
 //
 
-import Foundation
 import Node
 import JSON
 import Fluent
+import FluentProvider
 import Vapor
+import Foundation
 
-struct OwnerContext: Context {
-
-    var owner_id: Node
-
-    init?(from entity: Entity) {
-        guard let id = entity.id else {
-            return nil
+extension NodeError {
+    func appendPath(_ path: [PathIndexer]) -> NodeError {
+        switch self {
+        case .unableToConvert(
+            input: let input,
+            expectation: let expectation,
+            path: let existing
+            ) where existing.isEmpty:
+            return .unableToConvert(input: input, expectation: expectation, path: path)
+        default:
+            return self
         }
-
-        owner_id = id
-    }
-
-    init(with id: Int) {
-        owner_id = .number(.int(id))
     }
 }
 
-extension Node: JSONConvertible {
+extension StructuredDataWrapper {
     
-    mutating func substitute(key: String, model: Model) throws -> Node {
-        precondition(!key.hasSuffix("_id"))
-        
-        self["\(key)_id"] = nil
-        self[key] = try model.makeNode()
-        
-        return self
+    public func extract<T : NodeInitializable>(_ indexers: PathIndexer...) throws -> T {
+        return try extract(indexers)
     }
     
+    public func extract<T : NodeInitializable>(_ indexers: [PathIndexer]) throws -> T {
+        if let value = self[indexers], value != .null {
+            return try T(node: value)
+        }
+        
+        throw try NodeError.unableToConvert(input: self.makeNode(in: nil), expectation: "\(T.self)", path: indexers)
+    }
+    
+    public func extract<T, InputType: NodeInitializable>(_ indexers: PathIndexer..., transform: (InputType) throws -> T) throws -> T {
+        return try get(path: indexers, transform: transform)
+    }
+    
+    public func extract<T, InputType: NodeInitializable>(path indexers: [PathIndexer], transform: (InputType) throws -> T) throws -> T {
+        if let value = self[indexers], value != .null {
+            let input = try InputType(node: value, in: context)
+            return try transform(input)
+        }
+        
+        throw try NodeError.unableToConvert(input: self.makeNode(in: nil), expectation: "\(Node.self)", path: indexers)
+    }
+}
+
+
+extension Node {
+    
     mutating func merge(with json: JSON) throws -> Node {
-        guard let update = json.node.nodeObject else {
+        guard let update = json.node.object else {
             throw Abort.custom(status: .badRequest, message: "Expected [String : Object] node but got \(json.node)")
         }
         
@@ -61,44 +80,44 @@ extension Node: JSONConvertible {
     }
     
     func add(name: String, node: Node) throws -> Node {
-        guard var object = self.nodeObject else { throw NodeError.unableToConvert(node: self, expected: "[String: Node].self") }
+        guard var object = self.object else { throw NodeError.unableToConvert(input: self, expectation: "[String: Node].self", path: [name]) }
         object[name] = node
         return try Node(node: object)
     }
     
     func add(objects: [String : NodeConvertible?]) throws -> Node {
-        guard var nodeObject = self.nodeObject else { throw NodeError.unableToConvert(node: self, expected: "[String: Node].self") }
-        
-        for (name, object) in objects {
-            if let node = try object?.makeNode() {
-                nodeObject[name] = node
-            }
+        guard var previous = self.object else {
+            throw NodeError.invalidContainer(container: "object", element: "self")
         }
         
-        return try Node(node: nodeObject)
+        for (name, object) in objects {
+            previous[name] = try object.makeNode(in: emptyContext)
+        }
+        
+        return try Node(node: previous)
     }
 }
 
 public extension RawRepresentable where Self: NodeConvertible, RawValue == String {
     
-    public init(node: Node, in context: Context = EmptyNode) throws {
+    public init(node: Node) throws {
         
         guard let string = node.string else {
-            throw NodeError.unableToConvert(node: node, expected: "\(String.self)")
+            throw NodeError.unableToConvert(input: node, expectation: "\(String.self)", path: ["self"])
         }
         
         guard let value = Self.init(rawValue: string) else {
-            throw NodeError.unableToConvert(node: nil, expected: "todo")
+            throw Abort.custom(status: .badRequest, message: "Invalid node for \(Self.self)")
         }
         
         self = value
     }
     
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
+    public func makeNode(in context: Context?) throws -> Node {
         return Node.string(self.rawValue)
     }
     
-    public init?(from string: String) throws {
+    public init?(_ string: String) throws {
         guard let value = Self.init(rawValue: string) else {
             throw Abort.custom(status: .badRequest, message: "\(string) is not a valid value for for \(Self.self)")
         }
@@ -107,75 +126,20 @@ public extension RawRepresentable where Self: NodeConvertible, RawValue == Strin
     }
 }
 
-public extension Date {
-    
-    public init(ISO8601String: String) throws {
-        let dateFormatter = DateFormatter()
-        let enUSPosixLocale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.locale = enUSPosixLocale
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
-        
-        guard let date = dateFormatter.date(from: ISO8601String) else {
-            throw Abort.custom(status: .internalServerError, message: "Error parsing date string : \(ISO8601String)")
-        }
-        
-        self = date
-    }
-    
-    public var ISO8601String: String {
-        let dateFormatter = DateFormatter()
-        let enUSPosixLocale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.locale = enUSPosixLocale
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
-        
-        return dateFormatter.string(from: self)
-    }
-}
-
-
-extension Model {
-    
-    mutating func update(from json: JSON) throws -> Self {
-        var node = try self.makeNode()
-        var result = try Self.init(node: node.merge(with: json), in: EmptyNode)
-        result.exists = self.exists
-        return result
-    }
-}
-
-extension Date: NodeConvertible {
-    
-    public func makeNode(context: Context = EmptyNode) throws -> Node {
-        return .string(self.ISO8601String)
-    }
-    
-    public init(node: Node, in context: Context) throws {
-        
-        if case let .number(numberNode) = node {
-            self = Date(timeIntervalSince1970: numberNode.double)
-        } else if case let .string(value) = node {
-            self = try Date(ISO8601String: value)
-        } else {
-            throw NodeError.unableToConvert(node: node, expected: "UNIX timestamp or ISO string.")
-        }
-    }
-}
-
-
 public extension Node {
     
     // TODO : rename to extract stripe list
-    func extractList<T: NodeInitializable>(_ path: PathIndex...) throws -> [T] {
+    func extractList<T: NodeInitializable>(_ path: PathIndexer...) throws -> [T] {
         guard let node = self[path] else {
-            throw NodeError.unableToConvert(node: self, expected: "path at \(path)")
+            throw NodeError.unableToConvert(input: self, expectation: "stripe list", path: path)
         }
         
-        guard node["object"]?.string == "list" else {
-            throw NodeError.unableToConvert(node: node, expected: "object key with list value")
+        guard try node.extract("object") as String == "list" else {
+            throw NodeError.unableToConvert(input: node, expectation: "list", path: ["object"])
         }
         
-        guard let data = node["data"] else {
-            throw NodeError.unableToConvert(node: node, expected: "data key with list values")
+        guard let data = node["data"]?.array else {
+            throw NodeError.unableToConvert(input: node, expectation: "\(Array<Node>.self)", path: ["object"])
         }
         
         return try [T](node: data)
@@ -186,18 +150,18 @@ public extension Node {
             throw Abort.custom(status: .badRequest, message: "Missing list or string at \(key)")
         }
         
-        switch object {
+        switch object.wrapped {
         case let .array(strings):
             return strings.map { $0.string }.flatMap { $0 }
         case let .string(string):
             return string.components(separatedBy: separator)
         default:
-            throw Abort.custom(status: .badRequest, message: "Unknown format for \(key)... got \(object.type)")
+            throw Abort.custom(status: .badRequest, message: "Unknown format for \(key)... got \(object.wrapped.type)")
         }
     }
 }
 
-extension Node {
+extension StructuredData {
     
     var type: String {
         switch self {
@@ -222,6 +186,8 @@ extension Node {
             return "object"
         case .string(_):
             return "string"
+        case .date(_):
+            return "date"
         }
     }
     

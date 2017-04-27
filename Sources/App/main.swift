@@ -8,30 +8,47 @@
 
 import Vapor
 import Fluent
+import FluentProvider
 import Node
 import HTTP
-import Turnstile
+import AuthProvider
 import Foundation
-import Auth
 
 let drop = Droplet.create()
 
-drop.resource("makers", MakerController())
-drop.picture(base: "makers", slug: "makers_id", picture: PictureController<MakerPicture>())
+let formatter = DateFormatter()
+formatter.locale = Locale(identifier: "en_US_POSIX")
+formatter.timeZone = TimeZone(secondsFromGMT: 0)
+formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssXXXXX"
 
-drop.resource("customers", CustomerController())
-drop.picture(base: "customers", slug: "customer_id", picture: PictureController<CustomerPicture>())
+Date.incomingDateFormatters.append(formatter)
 
-drop.resource("products", ProductController())
-drop.picture(base: "products", slug: "products_id", picture: PictureController<ProductPicture>())
+drop.group(middleware: [PersistMiddleware(Customer.self), PersistMiddleware(Maker.self)]) { persistable in
+    
+    AuthenticationCollection().build(persistable)
+    
+    persistable.resource("makers", MakerController())
+    persistable.picture(base: "makers", slug: "makers_id", picture: PictureController<MakerPicture, Maker>())
+    
+    persistable.resource("customers", CustomerController())
+    persistable.picture(base: "customers", slug: "customer_id", picture: PictureController<CustomerPicture, Customer>())
+    
+    persistable.resource("products", ProductController())
+    persistable.picture(base: "products", slug: "products_id", picture: PictureController<ProductPicture, Product>())
+    
+    persistable.resource("customerAddresses", CustomerAddressController())
+    persistable.resource("tags", TagController())
+    
+    StripeCollection().build(persistable)
+    DescriptionCollection().build(persistable)
+    
+    persistable.get("search") { request in
+        return try Product.makeQuery().all().map { $0.name }.makeResponse()
+    }
+}
 
-drop.resource("customerAddresses", CustomerAddressController())
-drop.resource("tags", TagController())
-drop.resource("descriptions", DescriptionController())
-
-drop.resource("offers", OfferController())
-
-drop.collection(StripeCollection.self)
-drop.collection(AuthenticationCollection())
-
-drop.run()
+do {
+    try drop.run()
+} catch {
+    fatalError("Error while running droplet : \(error)")
+}

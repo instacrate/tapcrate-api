@@ -6,75 +6,166 @@
 //
 //
 
-import Foundation
 import Vapor
 import Fluent
-import Sanitized
+import FluentProvider
+import Node
 
-class Picture: Model, Preparation, JSONConvertible, Sanitizable {
+protocol Picture: Model, JSONConvertible, NodeConvertible, Sanitizable, Preparation {
+    
+    static func pictures(for owner: Identifier) throws -> Query<Self>
+}
 
-    static var permitted: [String] = ["owner_id", "url", "type"]
+final class MakerPicture: Picture {
+    
+    let storage = Storage()
+    
+    static var permitted: [String] = ["maker_id", "url"]
     
     var exists: Bool = false
     
-    var id: Node?
-    let owner_id: Node?
+    var id: Identifier?
+    let maker_id: Identifier
     let url: String
-    let index: Int?
-
-    required init(node: Node, in context: Context = EmptyNode) throws {
-        id = node["id"]
-        url = try node.extract("url")
-        owner_id = node["owner_id"] ?? (context as? OwnerContext)?.owner_id
-        index = try node.extract("index")
+    
+    static func pictures(for owner: Identifier) throws -> Query<MakerPicture> {
+        return try self.makeQuery().filter("maker_id", owner.int)
     }
     
-    func makeNode(context: Context) throws -> Node {
+    init(node: Node) throws {
+        _ = node.context
+        
+        id = try? node.extract("id")
+        url = try node.extract("url")
+        
+        if let context: ParentContext = node.context as? ParentContext {
+            maker_id = context.parent_id
+        } else {
+            maker_id = try node.extract("maker_id")
+        }
+    }
+    
+    func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "url" : .string(url)
-        ]).add(objects: [
-            "id" : id,
-            "owner_id" : owner_id,
-            "index" : index
-        ])
+            ]).add(objects: [
+                "id" : id,
+                "maker_id" : maker_id
+                ])
     }
     
     class func prepare(_ database: Database) throws {
-        try database.create(self.entity) { picture in
+        try database.create(MakerPicture.self) { picture in
             picture.id()
             picture.string("url")
-            picture.parent(idKey: "owner_id")
+            picture.parent(Maker.self)
         }
     }
     
     static func revert(_ database: Database) throws {
-        try database.delete(self.entity)
+        try database.delete(MakerPicture.self)
     }
 }
 
-final class MakerPicture: Picture {}
-final class CustomerPicture: Picture {}
-
-final class ProductPicture: Picture {
-
-    let type: Int?
+final class CustomerPicture: Picture {
     
-    required init(node: Node, in context: Context) throws {
-        type = try node.extract("type")
-            
-        try super.init(node: node, in: context)
+    let storage = Storage()
+    
+    static var permitted: [String] = ["customer_id", "url"]
+    
+    var exists: Bool = false
+    
+    var id: Identifier?
+    let customer_id: Identifier
+    let url: String
+    
+    static func pictures(for owner: Identifier) throws -> Query<CustomerPicture> {
+        return try self.makeQuery().filter("customer_id", owner.int)
     }
     
-    override func makeNode(context: Context) throws -> Node {
-        return try super.makeNode(context: context).add(objects: ["type" : type])
+    init(node: Node) throws {
+        _ = node.context
+        
+        id = try? node.extract("id")
+        url = try node.extract("url")
+        
+        if let context: ParentContext = node.context as? ParentContext {
+            customer_id = context.parent_id
+        } else {
+            customer_id = try node.extract("customer_id")
+        }
     }
     
-    override class func prepare(_ database: Database) throws {
-        try database.create(self.entity) { picture in
+    func makeNode(in context: Context?) throws -> Node {
+        return try Node(node: [
+            "url" : .string(url)
+            ]).add(objects: [
+                "id" : id,
+                "customer_id" : customer_id
+                ])
+    }
+    
+    class func prepare(_ database: Database) throws {
+        try database.create(CustomerPicture.self) { picture in
             picture.id()
             picture.string("url")
-            picture.string("type")
-            picture.parent(idKey: "owner_id")
+            picture.parent(Customer.self)
         }
+    }
+    
+    static func revert(_ database: Database) throws {
+        try database.delete(CustomerPicture.self)
+    }
+}
+
+final class ProductPicture: Picture {
+    
+    let storage = Storage()
+    
+    static var permitted: [String] = ["product_id", "url", "type"]
+    
+    var id: Identifier?
+    
+    let url: String
+    let type: Int?
+    let product_id: Identifier
+    
+    static func pictures(for owner: Identifier) throws -> Query<ProductPicture> {
+        return try self.makeQuery().filter("product_id", owner.int)
+    }
+    
+    init(node: Node) throws {
+        id = try? node.extract("id")
+        url = try node.extract("url")
+        type = try? node.extract("type")
+        
+        if let context: ParentContext = node.context as? ParentContext {
+            product_id = context.parent_id
+        } else {
+            product_id = try node.extract("product_id")
+        }
+    }
+    
+    func makeNode(in context: Context?) throws -> Node {
+        return try Node(node: [
+            "url" : .string(url),
+            ]).add(objects: [
+                "id" : id,
+                "product_id" : product_id,
+                "type" : type
+                ])
+    }
+    
+    class func prepare(_ database: Database) throws {
+        try database.create(ProductPicture.self) { picture in
+            picture.id()
+            picture.string("url")
+            picture.int("type")
+            picture.parent(Product.self)
+        }
+    }
+    
+    static func revert(_ database: Database) throws {
+        try database.delete(ProductPicture.self)
     }
 }

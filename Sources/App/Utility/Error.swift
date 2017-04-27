@@ -6,8 +6,9 @@
 //
 //
 
-import Foundation
 import Vapor
+import HTTP
+import FluentProvider
 
 enum ModelError: Error, CustomStringConvertible {
     
@@ -21,5 +22,12 @@ enum ModelError: Error, CustomStringConvertible {
         case let .ownerMismatch(from, to, fromId, toId):
             return "The object on \(to) linked from \(from) is not owned by the \(from)'s #\(fromId ?? 0). It is owned by \(toId ?? 0)"
         }
+    }
+}
+
+extension Abort {
+    
+    static func custom(status: Status, message: String) -> Abort {
+        return Abort(status, reason: message)
     }
 }
