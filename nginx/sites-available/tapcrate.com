@@ -5,7 +5,7 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com www.staging.tapcrate.com staging.tapcrate.com;
+    server_name tapcrate.com www.tapcrate.com api.tapcrate.com www.api.tapcrate.com static.tapcrate.com www.static.tapcrate.com beta.tapcrate.com www.beta.tapcrate.com;
 
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
@@ -62,6 +62,23 @@ server {
     location / {
         include proxy_params;
         proxy_pass http://127.0.0.1:8080;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+
+    include snippets/ssl-beta.polymyr.com.conf;
+    include snippets/ssl-params.conf;
+
+    root /home/hakon/tapcrate/tapcrate-development-api;
+
+    server_name beta.polymyr.com www.beta.polymyr.com;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://127.0.0.1:8081;
     }
 }
 
