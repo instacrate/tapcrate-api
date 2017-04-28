@@ -69,12 +69,12 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
 
-    include snippets/ssl-beta.polymyr.com.conf;
+    include snippets/ssl-beta.tapcrate.com.conf;
     include snippets/ssl-params.conf;
 
     root /home/hakon/tapcrate/tapcrate-development-api;
 
-    server_name beta.polymyr.com www.beta.polymyr.com;
+    server_name beta.tapcrate.com www.beta.tapcrate.com;
 
     location / {
         include proxy_params;
