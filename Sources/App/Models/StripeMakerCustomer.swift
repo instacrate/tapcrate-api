@@ -15,7 +15,6 @@ final class StripeMakerCustomer: Model, NodeConvertible, Preparation {
     
     let storage = Storage()
     
-    var id: Identifier?
     var exists: Bool = false
     
     let customer_id: Identifier
@@ -38,10 +37,11 @@ final class StripeMakerCustomer: Model, NodeConvertible, Preparation {
     }
     
     init(node: Node) throws {
-        id = try? node.extract("id")
         customer_id = try node.extract("customer_id")
         maker_id = try node.extract("maker_id")
         stripeCustomerId = try node.extract("stripeCustomerId")
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {
@@ -49,9 +49,9 @@ final class StripeMakerCustomer: Model, NodeConvertible, Preparation {
             "stripeCustomerId" : stripeCustomerId,
             "customer_id" : customer_id.makeNode(in: context),
             "maker_id" : maker_id.makeNode(in: context)
-            ]).add(objects: [
-                "id" : id
-                ])
+        ]).add(objects: [
+            "id" : id
+        ])
     }
     
     static func prepare(_ database: Database) throws {

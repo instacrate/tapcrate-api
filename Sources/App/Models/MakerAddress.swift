@@ -17,9 +17,6 @@ final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
     
     static var permitted: [String] = ["address", "apartment", "city", "state", "zip"]
     
-    var id: Identifier?
-    var exists = false
-    
     let address: String
     let apartment: String?
     
@@ -28,14 +25,14 @@ final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
     let zip: String
     
     init(node: Node) throws {
-        id = try? node.extract("id")
-        
         address = try node.extract("address")
         city = try node.extract("city")
         state = try node.extract("state")
         zip = try node.extract("zip")
         
         apartment = try? node.extract("apartment")
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {

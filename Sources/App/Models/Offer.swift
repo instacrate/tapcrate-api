@@ -23,11 +23,7 @@ final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
     
     static let permitted = ["type", "product_id", "line_1", "line_2", "expiration", "code"]
     
-    var id: Node?
-    var exists = false
-    
     let type: OfferType
-
     let line_1: String
     let line_2: String
     let expiration: Date
@@ -36,8 +32,6 @@ final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
     var product_id: Identifier
     
     init(node: Node) throws {
-        id = node["id"]
-        
         type = try node.extract("type")
         line_1 = try node.extract("line_1")
         line_2 = try node.extract("line_2")
@@ -49,6 +43,8 @@ final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
         } else {
             product_id = try node.extract("product_id")
         }
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {

@@ -17,9 +17,6 @@ final class CustomerAddress: Model, Preparation, NodeConvertible, Sanitizable {
     
     let storage = Storage()
     
-    var id: Identifier?
-    var exists = false
-    
     let firstName: String
     let lastName: String
     
@@ -34,8 +31,6 @@ final class CustomerAddress: Model, Preparation, NodeConvertible, Sanitizable {
     var customer_id: Identifier
     
     init(node: Node) throws {
-        id = try? node.extract("id")
-        
         customer_id = try node.extract("customer_id")
         address = try node.extract("address")
         firstName = try node.extract("firstName")
@@ -45,6 +40,8 @@ final class CustomerAddress: Model, Preparation, NodeConvertible, Sanitizable {
         zip = try node.extract("zip")
         phoneNumber = try? node.extract("phoneNumber")
         apartment = try? node.extract("apartment")
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {

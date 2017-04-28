@@ -17,22 +17,20 @@ final class Tag: Model, Preparation, NodeConvertible, Sanitizable {
     
     static var permitted: [String] = ["name"]
     
-    var id: Identifier?
-    var exists = false
-    
     let name: String
     
     init(node: Node) throws {
-        id = try? node.extract("id")
         name = try node.extract("name")
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "name" : name
-            ]).add(objects: [
-                "id" : id
-                ])
+        ]).add(objects: [
+            "id" : id
+        ])
     }
     
     static func prepare(_ database: Database) throws {

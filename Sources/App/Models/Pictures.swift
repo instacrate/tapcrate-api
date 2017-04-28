@@ -24,7 +24,6 @@ final class MakerPicture: Picture {
     
     var exists: Bool = false
     
-    var id: Identifier?
     let maker_id: Identifier
     let url: String
     
@@ -33,9 +32,6 @@ final class MakerPicture: Picture {
     }
     
     init(node: Node) throws {
-        _ = node.context
-        
-        id = try? node.extract("id")
         url = try node.extract("url")
         
         if let context: ParentContext = node.context as? ParentContext {
@@ -43,15 +39,17 @@ final class MakerPicture: Picture {
         } else {
             maker_id = try node.extract("maker_id")
         }
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "url" : .string(url)
-            ]).add(objects: [
-                "id" : id,
-                "maker_id" : maker_id
-                ])
+        ]).add(objects: [
+            "id" : id,
+            "maker_id" : maker_id
+        ])
     }
     
     class func prepare(_ database: Database) throws {
@@ -75,7 +73,6 @@ final class CustomerPicture: Picture {
     
     var exists: Bool = false
     
-    var id: Identifier?
     let customer_id: Identifier
     let url: String
     
@@ -84,9 +81,6 @@ final class CustomerPicture: Picture {
     }
     
     init(node: Node) throws {
-        _ = node.context
-        
-        id = try? node.extract("id")
         url = try node.extract("url")
         
         if let context: ParentContext = node.context as? ParentContext {
@@ -94,15 +88,17 @@ final class CustomerPicture: Picture {
         } else {
             customer_id = try node.extract("customer_id")
         }
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "url" : .string(url)
-            ]).add(objects: [
-                "id" : id,
-                "customer_id" : customer_id
-                ])
+        ]).add(objects: [
+            "id" : id,
+            "customer_id" : customer_id
+        ])
     }
     
     class func prepare(_ database: Database) throws {
@@ -124,8 +120,6 @@ final class ProductPicture: Picture {
     
     static var permitted: [String] = ["product_id", "url", "type"]
     
-    var id: Identifier?
-    
     let url: String
     let type: Int?
     let product_id: Identifier
@@ -135,7 +129,6 @@ final class ProductPicture: Picture {
     }
     
     init(node: Node) throws {
-        id = try? node.extract("id")
         url = try node.extract("url")
         type = try? node.extract("type")
         
@@ -144,16 +137,18 @@ final class ProductPicture: Picture {
         } else {
             product_id = try node.extract("product_id")
         }
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "url" : .string(url),
-            ]).add(objects: [
-                "id" : id,
-                "product_id" : product_id,
-                "type" : type
-                ])
+        ]).add(objects: [
+            "id" : id,
+            "product_id" : product_id,
+            "type" : type
+        ])
     }
     
     class func prepare(_ database: Database) throws {

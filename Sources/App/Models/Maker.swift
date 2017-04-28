@@ -42,9 +42,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
     
     static var permitted: [String] = ["email", "businessName", "publicWebsite", "contactName", "contactPhone", "contactEmail", "location", "createdOn", "cut", "username", "stripe_id", "keys", "missingFields", "needsIdentityUpload", "maker_address_id", "password"]
     
-    var id: Identifier?
-    var exists = false
-    
     let email: String
     let businessName: String
     let publicWebsite: String
@@ -75,8 +72,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
     }
     
     init(node: Node) throws {
-        
-        id = try? node.extract("id")
         
         username = try node.extract("username")
         password = try? node.extract("password")
@@ -112,6 +107,8 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
             
             keys = try Keys(node: Node(node: ["secret" : secret, "publishable" : publishable]))
         }
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {

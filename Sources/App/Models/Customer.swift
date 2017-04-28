@@ -31,9 +31,6 @@ final class Customer: Model, Preparation, NodeConvertible, Sanitizable, JWTIniti
     
     let storage = Storage()
     
-    var id: Identifier?
-    var exists = false
-    
     let name: String
     let email: String
     
@@ -52,13 +49,13 @@ final class Customer: Model, Preparation, NodeConvertible, Sanitizable, JWTIniti
     }
     
     init(node: Node) throws {
-        id = try? node.extract("id")
-        
         // Name and email are always mandatory
         email = try node.extract("email")
         name = try node.extract("name")
         stripe_id = try? node.extract("stripe_id")
         sub_id = try? node.extract("sub_id")
+        
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {
