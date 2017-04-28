@@ -22,21 +22,11 @@ extension Model where Self: NodeConvertible {
     }
 }
 
-extension Model where Self: NodeConvertible {
-    
-    public init(json: JSON) throws {
-        try self.init(node: Node(json.wrapped, in: nil))
-    }
-    
-    public func makeJSON() throws -> JSON {
-        return try JSON(self.makeNode(in: jsonContext).wrapped)
-    }
-}
-
-extension Model where Self: NodeConvertible {
+extension NodeRepresentable {
     
     func makeResponse() throws -> Response {
-        return try Response(status: .ok, json: JSON(self.makeNode(in: jsonContext)))
+        let json: JSON = try makeNode(in: jsonContext).converted()
+        return try Response(status: .ok, json: json)
     }
 }
 

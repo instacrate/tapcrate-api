@@ -22,11 +22,11 @@ extension StructuredDataWrapper {
 
 extension Request {
 
-    public func extractModel<M: Model>() throws -> M where M: Sanitizable & NodeConvertible  {
+    public func extractModel<M: Model>() throws -> M where M: Sanitizable & NodeInitializable  {
         return try extractModel(injecting: Node.null)
     }
 
-    public func extractModel<M: Model>(injecting: Node) throws -> M where M: Sanitizable & NodeConvertible {
+    public func extractModel<M: Model>(injecting: Node) throws -> M where M: Sanitizable & NodeInitializable {
         var json = try self.json().permit(M.permitted)
         
         injecting.object?.forEach { key, value in

@@ -10,7 +10,7 @@ import Vapor
 import Fluent
 import FluentProvider
 
-final class Product: Model, Preparation, JSONConvertible, NodeConvertible, Sanitizable {
+final class Product: Model, Preparation, NodeConvertible, Sanitizable {
     
     let storage = Storage()
     
@@ -46,10 +46,10 @@ final class Product: Model, Preparation, JSONConvertible, NodeConvertible, Sanit
             "shortDescription" : .string(shortDescription),
             "longDescription" : .string(longDescription),
             "created" : .date(created)
-            ]).add(objects: [
-                "id" : id,
-                "maker_id" : maker_id
-                ])
+        ]).add(objects: [
+            "id" : id,
+            "maker_id" : maker_id
+        ])
     }
     
     static func prepare(_ database: Database) throws {

@@ -16,7 +16,7 @@ final class OfferController: ResourceRepresentable {
     func create(_ request: Request) throws -> ResponseRepresentable {
         let offer: Offer = try request.extractModel()
         try offer.save()
-        return try offer.makeJSON().makeResponse()
+        return try offer.makeResponse()
     }
 
     func delete(_ request: Request, offer: Offer) throws -> ResponseRepresentable {
@@ -27,7 +27,7 @@ final class OfferController: ResourceRepresentable {
     func modify(_ request: Request, offer: Offer) throws -> ResponseRepresentable {
         let offer: Offer = try request.patchModel(offer)
         try offer.save()
-        return try Response(status: .ok, json: offer.makeJSON())
+        return try offer.makeResponse()
     }
 
     func makeResource() -> Resource<Offer> {

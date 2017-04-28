@@ -4,11 +4,11 @@
     "console": "terminal",
     "log": "console",
     "hash": "bcrypt",
-    "cipher": "bcrypt",
+    "cipher": "crypto",
     "cache" : "mysql-cache",
     "middleware" : [
-                    "file",
-                    "fluent-sessions",
-                    "error"
-                    ]
+        "file",
+        "fluent-sessions",
+        "error"
+    ]
 }

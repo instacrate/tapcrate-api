@@ -36,7 +36,7 @@ enum ApplicationState: String, NodeConvertible {
     }
 }
 
-final class Maker: Model, Preparation, JSONConvertible, NodeConvertible, Sanitizable, JWTInitializable, SessionPersistable {
+final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitializable, SessionPersistable {
     
     let storage = Storage()
     
@@ -132,16 +132,16 @@ final class Maker: Model, Preparation, JSONConvertible, NodeConvertible, Sanitiz
             
             "missingFields" : .bool(missingFields),
             "needsIdentityUpload" : .bool(needsIdentityUpload)
-            ]).add(objects: [
-                "id" : id,
-                "stripe_id" : stripe_id,
-                "publishableKey" : keys?.publishable,
-                "secretKey" : keys?.secret,
-                "maker_address_id" : maker_address_id,
-                "sub_id" : sub_id,
-                "createdOn" : Node.date(createdOn).string,
-                "password" : (context?.isRow ?? false) ? password : nil
-                ])
+        ]).add(objects: [
+            "id" : id,
+            "stripe_id" : stripe_id,
+            "publishableKey" : keys?.publishable,
+            "secretKey" : keys?.secret,
+            "maker_address_id" : maker_address_id,
+            "sub_id" : sub_id,
+            "createdOn" : Node.date(createdOn).string,
+            "password" : (context?.isRow ?? false) ? password : nil
+        ])
     }
     
     static func prepare(_ database: Database) throws {

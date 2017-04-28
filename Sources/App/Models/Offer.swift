@@ -17,11 +17,11 @@ enum OfferType: String, NodeConvertible {
     case deal
 }
 
-final class Offer: Model, Preparation, JSONConvertible, NodeConvertible, Sanitizable {
+final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
 
     let storage = Storage()
     
-    static var permitted: [String] = ["type", "product_id", "line_1", "line_2", "expiration", "code"]
+    static let permitted = ["type", "product_id", "line_1", "line_2", "expiration", "code"]
     
     var id: Node?
     var exists = false
@@ -35,7 +35,7 @@ final class Offer: Model, Preparation, JSONConvertible, NodeConvertible, Sanitiz
 
     var product_id: Identifier
     
-    init(node: Node, in context: Context) throws {
+    init(node: Node) throws {
         id = node["id"]
         
         type = try node.extract("type")
@@ -51,7 +51,7 @@ final class Offer: Model, Preparation, JSONConvertible, NodeConvertible, Sanitiz
         }
     }
     
-    func makeNode(context: Context) throws -> Node {
+    func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "type" : try type.makeNode(in: emptyContext),
             "line_1" : .string(line_1),

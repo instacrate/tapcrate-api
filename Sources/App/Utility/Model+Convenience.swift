@@ -11,13 +11,6 @@ import Vapor
 import Fluent
 import FluentProvider
 
-extension NodeConvertible {
-    
-    public func makeResponse() throws -> Response {
-        return try Response(status: .ok, json: JSON(makeNode(in: jsonContext)))
-    }
-}
-
 extension Model {
     
     func throwableId() throws -> Int {

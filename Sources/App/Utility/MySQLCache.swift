@@ -12,11 +12,11 @@ import Cache
 import JSON
 
 public final class MySQLCache: CacheProtocol {
-    public let database: Database
-    public let defaultExpiration: Date?
-    public init(_ database: Database, defaultExpiration: Date? = nil) {
-        self.database = database
-        self.defaultExpiration = defaultExpiration
+    
+    public let driver: Driver
+    
+    public init(_ driver: Driver) {
+        self.driver = driver
     }
 
     public func get(_ key: String) throws -> Node? {
@@ -58,7 +58,7 @@ public final class MySQLCache: CacheProtocol {
     }
 
     private func _find(_ key: String) throws -> MySQLCacheEntity? {
-        return try Query<MySQLCacheEntity>(database).filter("key", key).first()
+        return try Query<MySQLCacheEntity>(driver).filter("key", key).first()
     }
 }
 
@@ -94,6 +94,13 @@ extension MySQLCache {
             try row.set("expiration", expiration)
             return row
         }
+    }
+}
+
+extension MySQLCache: ConfigInitializable {
+    public convenience init(config: Config) throws {
+        let driver = try config.resolveDriver()
+        self.init(driver)
     }
 }
 

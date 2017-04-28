@@ -160,7 +160,7 @@ final class ProductController: ResourceRepresentable {
                 }.makeResponse()
         }
         
-        return try products.makeJSON()
+        return try products.makeResponse()
     }
     
     func show(_ request: Request, product: Product) throws -> ResponseRepresentable {
@@ -243,7 +243,7 @@ final class ProductController: ResourceRepresentable {
         
         let product: Product = try request.patchModel(product)
         try product.save()
-        return try Response(status: .ok, json: product.makeJSON())
+        return try product.makeResponse()
     }
     
     func makeResource() -> Resource<Product> {

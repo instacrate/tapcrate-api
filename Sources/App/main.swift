@@ -39,6 +39,8 @@ drop.group(middleware: [PersistMiddleware(Customer.self), PersistMiddleware(Make
     persistable.resource("customerAddresses", CustomerAddressController())
     persistable.resource("tags", TagController())
     
+    persistable.resource("offers", OfferController())
+    
     StripeCollection().build(persistable)
     DescriptionCollection().build(persistable)
     
