@@ -175,7 +175,7 @@ final class ProductController: ResourceRepresentable {
                 case "pictures":
                     return try [products[0].pictures().all().makeNode(in: jsonContext)]
                 default:
-                    fatalError("Could not find expansion for \(key) on ProductController.")
+                    throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
                 }
             }).makeResponse()
         }
