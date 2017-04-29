@@ -154,6 +154,14 @@ final class ProductController: ResourceRepresentable {
                     return try identifiers.map { id in
                         try pictures.filter { try $0.product_id == id.converted(in: emptyContext) }
                     }
+                    
+                case "offers":
+                    let offers = try Offer.makeQuery().filter(.subset(Product.foreignIdKey, .in, identifiers)).all()
+                    
+                    return try identifiers.map { id in
+                        try offers.filter { try $0.product_id == id.converted(in: emptyContext) }
+                    }
+                    
                 default:
                     throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
                 }
@@ -174,6 +182,8 @@ final class ProductController: ResourceRepresentable {
                     return try products[0].maker().limit(1).all()
                 case "pictures":
                     return try [products[0].pictures().all().makeNode(in: jsonContext)]
+                case "offers":
+                    return try [products[0].offers().all().makeNode(in: jsonContext)]
                 default:
                     throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
                 }

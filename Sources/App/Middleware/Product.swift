@@ -82,4 +82,8 @@ extension Product {
     func pictures() -> Children<Product, ProductPicture> {
         return children()
     }
+    
+    func offers() -> Children<Product, Offer> {
+        return children()
+    }
 }

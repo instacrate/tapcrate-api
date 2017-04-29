@@ -38,6 +38,7 @@ drop.group(middleware: [PersistMiddleware(Customer.self), PersistMiddleware(Make
     
     persistable.resource("customerAddresses", CustomerAddressController())
     persistable.resource("tags", TagController())
+    try! persistable.collection(DescriptionCollection.self)
     
     persistable.resource("offers", OfferController())
     try! persistable.collection(TrackingCollection.self)

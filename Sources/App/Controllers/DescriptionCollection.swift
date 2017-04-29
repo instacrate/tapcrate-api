@@ -41,7 +41,11 @@ func save(data: Data, for product: Int) throws -> String {
     return "https://static.polymyr.com/descriptions/\(product).json"
 }
 
-final class DescriptionCollection {
+final class DescriptionCollection: RouteCollection, EmptyInitializable {
+    
+    init() {
+        
+    }
     
     func build(_ builder: RouteBuilder) {
         
