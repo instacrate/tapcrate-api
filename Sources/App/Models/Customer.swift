@@ -89,6 +89,10 @@ extension Customer {
     func shippingAddresses() -> Children<Customer, CustomerAddress> {
         return children()
     }
+    
+    func offers() -> Siblings<Customer, Offer, Pivot<Customer, Offer>> {
+        return siblings()
+    }
 }
 
 extension Customer: Authenticatable {}

@@ -61,7 +61,9 @@ extension Droplet {
                                    CustomerPicture.self,
                                    ProductPicture.self,
                                    Offer.self,
-                                   MySQLCache.MySQLCacheEntity.self]
+                                   Pivot<Offer, Customer>.self,
+                                   MySQLCache.MySQLCacheEntity.self,
+                                   PageView.self]
             
             let drop = try Droplet(config)
             
