@@ -121,7 +121,7 @@ final class ProductPicture: Picture {
     static var permitted: [String] = ["product_id", "url", "type"]
     
     let url: String
-    let type: Int?
+    let type: Int
     let product_id: Identifier
     
     static func pictures(for owner: Identifier) throws -> Query<ProductPicture> {
@@ -130,7 +130,7 @@ final class ProductPicture: Picture {
     
     init(node: Node) throws {
         url = try node.extract("url")
-        type = try? node.extract("type")
+        type = try node.extract("type")
         
         if let context: ParentContext = node.context as? ParentContext {
             product_id = context.parent_id
@@ -144,10 +144,10 @@ final class ProductPicture: Picture {
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "url" : .string(url),
+            "type" : .number(.int(type))
         ]).add(objects: [
             "id" : id,
-            "product_id" : product_id,
-            "type" : type
+            "product_id" : product_id
         ])
     }
     
