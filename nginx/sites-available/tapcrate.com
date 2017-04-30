@@ -40,6 +40,7 @@ server {
 
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
+        include snippets/gzip.conf;
         fastcgi_pass unix:/run/php/php7.0-fpm.sock;
     }
 
@@ -61,6 +62,7 @@ server {
 
     location / {
         include proxy_params;
+        include snippets/gzip.conf;
         proxy_pass http://127.0.0.1:8080;
     }
 }
@@ -78,6 +80,7 @@ server {
 
     location / {
         include proxy_params;
+        include snippets/gzip.conf;
         proxy_pass http://127.0.0.1:8081;
     }
 }
@@ -103,6 +106,8 @@ server {
         sendfile on;
         tcp_nopush on;
         sendfile_max_chunk 1m;
+
+        include snippets/gzip.conf;
 
         proxy_cache static;
         try_files $uri =404;
