@@ -23,7 +23,7 @@
       "package": "Bits",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/bits.git",
-      "version": "1.0.0-beta.4"
+      "version": "1.0.0-beta.6"
     },
     {
       "package": "CMySQL",
@@ -47,7 +47,7 @@
       "package": "Core",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/core.git",
-      "version": "2.0.0-beta.3"
+      "version": "2.0.0-beta.9"
     },
     {
       "package": "Crypto",
@@ -65,13 +65,13 @@
       "package": "Engine",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/engine.git",
-      "version": "2.0.0-beta.2"
+      "version": "2.0.0-beta.5"
     },
     {
       "package": "Fluent",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/fluent.git",
-      "version": "2.0.0-beta.24"
+      "version": "2.0.0-beta.25"
     },
     {
       "package": "FluentProvider",
@@ -83,19 +83,13 @@
       "package": "JSON",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/json.git",
-      "version": "2.0.0-beta.1"
+      "version": "2.0.0-beta.3"
     },
     {
       "package": "JWT",
       "reason": null,
       "repositoryURL": "https://github.com/hhanesand/jwt.git",
       "version": "2.0.0-beta.3"
-    },
-    {
-      "package": "Jay",
-      "reason": null,
-      "repositoryURL": "https://github.com/DanToml/Jay.git",
-      "version": "1.0.1"
     },
     {
       "package": "Multipart",
@@ -143,7 +137,7 @@
       "package": "Routing",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/routing.git",
-      "version": "2.0.0-beta.2"
+      "version": "2.0.0-beta.3"
     },
     {
       "package": "SQLite",
@@ -155,19 +149,19 @@
       "package": "Sockets",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/socks.git",
-      "version": "2.0.0-beta.3"
+      "version": "2.0.0-beta.5"
     },
     {
       "package": "TLS",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/tls.git",
-      "version": "2.0.0-beta.2"
+      "version": "2.0.0-beta.4"
     },
     {
       "package": "Vapor",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/vapor.git",
-      "version": "2.0.0-beta.18"
+      "version": "2.0.0-beta.23"
     }
   ],
   "version": 1
