@@ -1,4 +1,0 @@
-module CSQLite {
-    umbrella "/Users/hhanesand/Documents/Developer/tapcrate/tapcrate-api/.build/checkouts/sqlite.git--8232814251736334455/Sources/CSQLite/include"
-    export *
-}
