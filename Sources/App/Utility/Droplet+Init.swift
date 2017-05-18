@@ -49,22 +49,27 @@ extension Droplet {
             
             try config.addProvider(FluentCacheProvider.self)
         
-            config.preparations = [MakerAddress.self,
-                                   Maker.self,
-                                   Product.self,
-                                   Customer.self,
-                                   CustomerAddress.self,
-                                   StripeMakerCustomer.self,
-                                   Tag.self,
-                                   Pivot<Tag, Product>.self,
-                                   MakerPicture.self,
-                                   CustomerPicture.self,
-                                   ProductPicture.self,
-                                   Offer.self,
-                                   Pivot<Offer, Customer>.self,
-                                   MySQLCache.MySQLCacheEntity.self,
-                                   PageView.self]
-            
+            config.preparations += [
+                MakerAddress.self,
+                Maker.self,
+                MakerPicture.self,
+
+                Customer.self,
+                CustomerAddress.self,
+                CustomerPicture.self,
+                StripeMakerCustomer.self,
+
+                Product.self,
+                ProductPicture.self,
+                Tag.self,
+                Pivot<Tag, Product>.self,
+
+                Order.self,
+                MySQLCache.MySQLCacheEntity.self,
+                Variant.self,
+                ProductPlan.self
+            ] as [Preparation.Type]
+
             let drop = try Droplet(config)
             
             drop.database?.log = { query in

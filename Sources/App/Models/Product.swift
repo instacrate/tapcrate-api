@@ -86,4 +86,28 @@ extension Product {
     func offers() -> Children<Product, Offer> {
         return children()
     }
+    
+    func plans() throws -> Query<ProductPlan> {
+        return try children().filter("maker_id", maker_id)
+    }
+}
+
+extension Product {
+    
+    func subscriptionPlanIdentifier(for maker: Maker) throws -> String {
+        if let plan = try self.plans().first() {
+            return connectAccountPlan.plan_id
+        } else {
+            guard let secret = maker.keys?.secret else {
+                throw Abort.custom(status: .internalServerError, message: "Missing secret keys for vendor. \(maker.throwableId())")
+            }
+            
+            let plan = try Stripe.shared.createPlanFor(box: self, on: secret)
+            
+            var boxPlan = try BoxPlan(box: self, plan_id: plan.id, vendor: vendor)
+            try boxPlan.save()
+            
+            return boxPlan.plan_id
+        }
+    }
 }

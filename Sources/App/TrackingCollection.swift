@@ -21,8 +21,8 @@ class TrackingCollection: EmptyInitializable, RouteCollection {
     func build(_ builder: RouteBuilder) {
         
         builder.post("views") { request in
-            let customer_id = try request.customer().id
-            let pageView: PageView = try request.extractModel(injecting: customer_id)
+            let customer_id = try request.customer().throwableId()
+            let pageView: PageView = try request.extractModel(injecting: Node(customer_id))
             try pageView.save()
             
             return Response(status: .ok)

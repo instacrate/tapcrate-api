@@ -81,7 +81,8 @@ extension MySQLCache {
         public init(row: Row) throws {
             key = try row.extract("key")
 
-            let parsed = try JSON(serialized: row.extract("value") as String)
+            let bytes: String = try row.extract()
+            let parsed = try JSON(bytes: bytes.makeBytes())
             value = parsed.converted(to: Node.self)
 
             expiration = try? row.extract("expiration")

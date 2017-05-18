@@ -36,7 +36,7 @@ func serialize<R: StructuredDataWrapper>(_ _array: [Int]?, in _context: Context?
     }
     
     if let context = _context, context.isRow {
-        let serialized = try JSON(node: array).serialize().string()
+        let serialized = try JSON(node: array).serialize().makeString()
         return R(.string(serialized), in: emptyContext)
     } else {
         return try R(Node(node: array, in: emptyContext).wrapped, in: emptyContext)
@@ -49,7 +49,7 @@ func serialize<R: StructuredDataWrapper>(_ _array: [String]?, in _context: Conte
     }
     
     if let context = _context, context.isRow {
-        let serialized = try JSON(node: array).serialize().string()
+        let serialized = try JSON(node: array).serialize().makeString()
         return R(.string(serialized), in: emptyContext)
     } else {
         return try R(Node(node: array, in: emptyContext).wrapped, in: emptyContext)

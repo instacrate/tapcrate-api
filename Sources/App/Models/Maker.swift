@@ -77,7 +77,7 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
         password = try? node.extract("password")
         
         if let password = try? node.extract("password") as String {
-            self.hash = try drop.hash.make(password).string()
+            self.hash = try drop.hash.make(password).makeString()
         } else {
             self.hash = try node.extract("hash") as String
         }
@@ -174,40 +174,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
     static func revert(_ database: Database) throws {
         try database.delete(Maker.self)
     }
-    
-    func fetchConnectAccount(for customer: Customer, with card: String) throws -> String {
-        guard let customer_id = customer.id else {
-            throw Abort.custom(status: .internalServerError, message: "Asked to find connect account customer for customer with no id.")
-        }
-        
-        guard let stripeCustomerId = customer.stripe_id else {
-            throw Abort.custom(status: .internalServerError, message: "Can not duplicate account onto maker connect account if it has not been created on the platform first.")
-        }
-        
-        guard let secretKey = keys?.secret else {
-            throw Abort.custom(status: .internalServerError, message: "Missing secret key for maker with id \(id?.int ?? 0)")
-        }
-        
-        if let connectAccountCustomer = try self.connectAccountCustomers().filter("customer_id", customer_id).filter("maker_id", self.throwableId()).first() {
-            
-            let hasPaymentMethod = try Stripe.shared.paymentInformation(for: connectAccountCustomer.stripeCustomerId, under: secretKey).filter { $0.id == card }.count > 0
-            
-            if !hasPaymentMethod {
-                let token = try Stripe.shared.createToken(for: connectAccountCustomer.stripeCustomerId, representing: card, on: secretKey)
-                let _ = try Stripe.shared.associate(source: token.id, withStripe: connectAccountCustomer.stripeCustomerId, under: secretKey)
-            }
-            
-            return connectAccountCustomer.stripeCustomerId
-        } else {
-            let token = try Stripe.shared.createToken(for: stripeCustomerId, representing: card, on: secretKey)
-            let stripeCustomer = try Stripe.shared.createStandaloneAccount(for: customer, from: token, on: secretKey)
-            
-            let makerCustomer = try StripeMakerCustomer(maker: self, customer: customer, account: stripeCustomer.id)
-            try makerCustomer.save()
-            
-            return makerCustomer.stripeCustomerId
-        }
-    }
 }
 
 extension Maker {
@@ -216,20 +182,59 @@ extension Maker {
         return children()
     }
     
-    func connectAccountCustomers() throws -> Children<Maker, StripeMakerCustomer> {
+    func connectCustomers() throws -> Children<Maker, StripeMakerCustomer> {
         return children()
     }
     
     func address() -> Parent<Maker, MakerAddress> {
         return parent(id: maker_address_id)
     }
+
+    func orders() -> Children<Maker, Order> {
+        return children()
+    }
+}
+
+extension Maker {
+    
+    func connectAccount(for customer: Customer, with card: String) throws -> String {
+        let customer_id = try customer.throwableId()
+        
+        guard let stripeCustomerId = customer.stripe_id else {
+            throw Abort.custom(status: .internalServerError, message: "Can not duplicate account onto vendor connect account if it has not been created on the platform first.")
+        }
+        
+        guard let secretKey = keys?.secret else {
+            throw Abort.custom(status: .internalServerError, message: "Missing secret key for vendor with id \(id?.int ?? 0)")
+        }
+        
+        if let connectAccount = try self.connectCustomers().filter("customer_id", customer_id).first() {
+            
+            let hasPaymentMethod = try Stripe.shared.paymentInformation(for: connectAccount.stripeCustomerId, under: secretKey).filter { $0.id == card }.count > 0
+            
+            if !hasPaymentMethod {
+                let token = try Stripe.shared.createToken(for: connectAccount.stripeCustomerId, representing: card, on: secretKey)
+                let _ = try Stripe.shared.associate(source: token.id, withStripe: connectAccount.stripeCustomerId, under: secretKey)
+            }
+            
+            return connectAccount.stripeCustomerId
+        } else {
+            let token = try Stripe.shared.createToken(for: stripeCustomerId, representing: card, on: secretKey)
+            let stripeCustomer = try Stripe.shared.createStandaloneAccount(for: customer, from: token, on: secretKey)
+            
+            let connectAccount = try StripeMakerCustomer(maker: self, customer: customer, account: stripeCustomer.id)
+            try connectAccount.save()
+            
+            return connectAccount.stripeCustomerId
+        }
+    }
 }
 
 extension BCryptHasher: PasswordVerifier {
     
-    public func verify(password: String, matchesHash: String) throws -> Bool {
+    public func verify(password: Bytes, matches hash: Bytes) throws -> Bool {
         do {
-            return try self.check(password, matchesHash: matchesHash)
+            return try self.check(password, matchesHash: hash)
         } catch {
             throw Abort.custom(status: .unauthorized, message: "error matching hash \(error)")
         }
@@ -276,7 +281,7 @@ extension Maker: PasswordAuthenticatable {
         }
         
         do {
-            guard try passwordVerifier.verify(password: creds.password, matchesHash: hash) else {
+            guard try passwordVerifier.verify(password: creds.password, matches: hash) else {
                 if drop.config.environment == .development {
                     throw Abort.custom(status: .badRequest, message: "Password \(creds.password) does not match hash : \(hash)")
                 } else {
