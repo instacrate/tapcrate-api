@@ -34,6 +34,16 @@ final class Variant: Model, Preparation, NodeConvertible, Sanitizable {
         id = try? node.extract("id")
     }
     
+    convenience init(row: Row) throws {
+        var node: Node = row.converted()
+        
+        let extracted: String = try node.extract("options")
+        let parsed = try JSON(bytes: extracted.makeBytes())
+        try node.set("options", parsed.converted(to: [String].self))
+
+        try self.init(node: node)
+    }
+    
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "name" : name,
