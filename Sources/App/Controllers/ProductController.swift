@@ -170,6 +170,13 @@ final class ProductController: ResourceRepresentable {
                         try offers.filter { try $0.product_id == id.converted(in: emptyContext) }
                     }
                     
+                case "variants":
+                    let variants = try Variant.makeQuery().filter(.subset(Product.foreignIdKey, .in, identifiers)).all()
+                    
+                    return try identifiers.map { id in
+                        try variants.filter { try $0.product_id == id.converted(in: emptyContext) }
+                    }
+                    
                 default:
                     throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
                 }
@@ -189,9 +196,11 @@ final class ProductController: ResourceRepresentable {
                 case "maker":
                     return try products[0].maker().limit(1).all()
                 case "pictures":
-                    return try [products[0].pictures().all().makeNode(in: jsonContext)]
+                    return try [products[0].pictures().all()]
                 case "offers":
-                    return try [products[0].offers().all().makeNode(in: jsonContext)]
+                    return try [products[0].offers().all()]
+                case "variants":
+                    return try [products[0].variants().all()]
                 default:
                     throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
                 }
@@ -220,14 +229,15 @@ final class ProductController: ResourceRepresentable {
         
         if let pictureNode: [Node] = try? node.extract("pictures") {
             
+            let context = try ParentContext(id: product_id)
+            
             let pictures = try pictureNode.map { (object: Node) -> ProductPicture in
-                let context = try ParentContext(id: product_id)
                 let picture: ProductPicture = try ProductPicture(node: Node(object.permit(ProductPicture.permitted).wrapped, in: context))
                 try picture.save()
                 return picture
             }
             
-            result["pictures"] = try pictures.makeNode(in: emptyContext)
+            result["pictures"] = try pictures.makeNode(in: jsonContext)
         }
         
         if let tags: [Int] = try? node.extract("tags") {
@@ -244,6 +254,19 @@ final class ProductController: ResourceRepresentable {
                 }.flatMap { $0 }
             
             result["tags"] = try tags.makeNode(in: emptyContext)
+        }
+        
+        if let variantNodes: [Node] = try? node.extract("variants") {
+            
+            let context = try ParentContext(id: product.id)
+            
+            let variants = try variantNodes.map { (variantNode: Node) -> Variant in
+                let variant = try Variant(node: Node(variantNode.permit(Variant.permitted).wrapped, in: context))
+                try variant.save()
+                return variant
+            }
+            
+            result["variants"] = try variants.makeNode(in: jsonContext)
         }
         
         return try JSON(result.makeNode(in: jsonContext))

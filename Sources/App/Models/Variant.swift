@@ -15,7 +15,7 @@ final class Variant: Model, Preparation, NodeConvertible, Sanitizable {
     
     let storage = Storage()
     
-    static var permitted: [String] = ["name"]
+    static var permitted: [String] = ["name", "product_id", "options"]
     
     let name: String
     let options: [String]
@@ -23,12 +23,14 @@ final class Variant: Model, Preparation, NodeConvertible, Sanitizable {
     
     init(node: Node) throws {
         name = try node.extract("name")
-        product_id = try node.extract("product_id")
         
-        let extracted: String = try node.extract("options")
-        let parsed = try JSON(bytes: extracted.makeBytes())
-        options = try parsed.converted(to: [String].self)
+        if let parent = node.context as? ParentContext {
+            product_id = parent.parent_id
+        } else {
+            product_id = try node.extract("product_id")
+        }
         
+        options = try node.extract("options")
         id = try? node.extract("id")
     }
     

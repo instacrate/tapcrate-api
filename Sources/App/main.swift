@@ -45,6 +45,7 @@ drop.group(middleware: [PersistMiddleware(Customer.self), PersistMiddleware(Make
     try! persistable.collection(TrackingCollection.self)
     
     persistable.resource("orders", OrderController())
+    persistable.resource("variants", VariantController())
     
     StripeCollection().build(persistable)
     DescriptionCollection().build(persistable)

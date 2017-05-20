@@ -90,6 +90,10 @@ extension Product {
     func plans() throws -> Query<ProductPlan> {
         return try children().filter("maker_id", maker_id)
     }
+    
+    func variants() -> Children<Product, Variant> {
+        return children()
+    }
 }
 
 extension Product {
