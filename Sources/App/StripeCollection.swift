@@ -11,7 +11,6 @@ import Routing
 import Vapor
 import Node
 import Foundation
-import TypeSafeRouting
 
 extension Sequence where Iterator.Element == Bool {
     
@@ -86,7 +85,9 @@ class StripeCollection: EmptyInitializable {
                 
                 customer.group("sources") { sources in
                     
-                    sources.post("default", String.init(stringLiteral:)) { request, source in
+                    sources.grouped("default").post(String.parameter) { request in
+                        let source = try request.parameters.next(String.self)
+                        
                         guard let id = try request.customer().stripe_id else {
                             throw try Abort.custom(status: .badRequest, message: "user \(request.customer().throwableId()) doesn't have a stripe account")
                         }
@@ -94,7 +95,8 @@ class StripeCollection: EmptyInitializable {
                         return try Stripe.shared.update(customer: id, parameters: ["default_source" : source]).makeResponse()
                     }
                     
-                    sources.post(String.init(stringLiteral:)) { request, source in
+                    sources.post(String.parameter) { request in
+                        let source = try request.parameters.next(String.self)
                         
                         guard let customer = try? request.customer() else {
                             throw Abort.custom(status: .forbidden, message: "Log in first.")
@@ -110,7 +112,8 @@ class StripeCollection: EmptyInitializable {
                         }
                     }
                     
-                    sources.delete(String.init(stringLiteral:)) { request, source in
+                    sources.delete(String.parameter) { request in
+                        let source = try request.parameters.next(String.self)
                         
                         guard let customer = try? request.customer() else {
                             throw Abort.custom(status: .forbidden, message: "Log in first.")
@@ -134,7 +137,9 @@ class StripeCollection: EmptyInitializable {
                 }
             }
             
-            stripe.get("country", "verification", String.init(stringLiteral:)) { request, country_code in
+            stripe.get("country", "verification", String.parameter) { request in
+                let country_code = try request.parameters.next(String.self)
+                
                 guard let country = try? CountryCode(node: country_code) else {
                     throw Abort.custom(status: .badRequest, message: "\(country_code) is not a valid country code.")
                 }
@@ -159,7 +164,8 @@ class StripeCollection: EmptyInitializable {
                     return try maker.makeResponse()
                 }
                 
-                maker.post("acceptedtos", String.init(stringLiteral:)) { request, ip in
+                maker.post("acceptedtos", String.parameter) { request in
+                    let ip = try request.parameters.next(String.self)
                     let maker = try request.maker()
                     
                     guard let stripe_id = maker.stripe_id else {
@@ -208,7 +214,7 @@ class StripeCollection: EmptyInitializable {
                     let fieldsNeeded = account.filteredNeededFieldsWithCombinedDateOfBirth()
                     
                     guard var object = try request.json().permit(fieldsNeeded).node.object else {
-                        throw NodeError.invalidContainer(container: "object", element: "self")
+                        throw Abort.custom(status: .badRequest, message: "Could not extract object from request body")
                     }
                     
                     if object.keys.contains(where: { $0.hasPrefix("external_account") }) {

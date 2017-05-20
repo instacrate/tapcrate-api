@@ -33,7 +33,7 @@ final class OfferController: ResourceRepresentable {
     func makeResource() -> Resource<Offer> {
         return Resource(
             store: create,
-            modify: modify,
+            update: modify,
             destroy: delete
         )
     }

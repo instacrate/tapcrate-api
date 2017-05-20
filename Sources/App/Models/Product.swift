@@ -94,17 +94,20 @@ extension Product {
 
 extension Product {
     
-    func subscriptionPlanIdentifier(for maker: Maker) throws -> String {
+    func subscriptionPlanIdentifier() throws -> String {
         if let plan = try self.plans().first() {
-            return connectAccountPlan.plan_id
+            return plan.plan_id
         } else {
-            guard let secret = maker.keys?.secret else {
-                throw Abort.custom(status: .internalServerError, message: "Missing secret keys for vendor. \(maker.throwableId())")
+            guard let maker = try maker().first() else {
+                throw Abort.custom(status: .internalServerError, message: "Could not get maker from product")
             }
             
-            let plan = try Stripe.shared.createPlanFor(box: self, on: secret)
+            guard let secret = maker.keys?.secret else {
+                throw try Abort.custom(status: .internalServerError, message: "Missing secret keys for vendor. \(maker.throwableId())")
+            }
             
-            var boxPlan = try BoxPlan(box: self, plan_id: plan.id, vendor: vendor)
+            let plan = try Stripe.shared.createPlan(with: fullPrice, name: name, interval: .month, on: secret)
+            let boxPlan = try ProductPlan(product: self, maker: maker, plan_id: plan.id)
             try boxPlan.save()
             
             return boxPlan.plan_id

@@ -18,7 +18,7 @@ public final class StripeCustomer: NodeConvertible {
     public let account_balance: Int
     public let created: Date
     public let currency: Currency?
-    public let default_source: String
+    public let default_source: String?
     public let delinquent: Bool
     public let metadata: Node
     public let description: String?
@@ -38,7 +38,7 @@ public final class StripeCustomer: NodeConvertible {
         account_balance = try node.extract("account_balance")
         created = try node.extract("created")
         currency = try? node.extract("currency")
-        default_source = try node.extract("default_source")
+        default_source = try? node.extract("default_source")
         delinquent = try node.extract("delinquent")
         description = try? node.extract("description")
         discount = try? node.extract("discount")
@@ -54,7 +54,6 @@ public final class StripeCustomer: NodeConvertible {
             "id" : .string(id),
             "account_balance" : .number(.int(account_balance)),
             "created" : .number(.double(created.timeIntervalSince1970)),
-            "default_source" : .string(default_source),
             "delinquent" : .bool(delinquent),
             "livemode" : .bool(livemode),
             "sources" :  .array(sources.map { try $0.makeNode(in: context) }),
@@ -64,7 +63,8 @@ public final class StripeCustomer: NodeConvertible {
             "discount" : discount,
             "currency" : currency,
             "description" : description,
-            "email" : email
+            "email" : email,
+            "default_source" : default_source
         ])
     }
 }

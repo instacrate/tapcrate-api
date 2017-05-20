@@ -11,7 +11,6 @@ import Routing
 import Vapor
 import Node
 import Foundation
-import TypeSafeRouting
 import Fluent
 
 class TrackingCollection: EmptyInitializable, RouteCollection {

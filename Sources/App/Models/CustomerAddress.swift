@@ -52,12 +52,12 @@ final class CustomerAddress: Model, Preparation, NodeConvertible, Sanitizable {
             "zip" : .string(zip),
             "firstName" : .string(firstName),
             "lastName" : .string(lastName),
-            ]).add(objects: [
-                "id" : id,
-                "apartment" : apartment,
-                "phoneNumber" : phoneNumber,
-                "customer_id" : customer_id
-                ])
+        ]).add(objects: [
+            "id" : id,
+            "apartment" : apartment,
+            "phoneNumber" : phoneNumber,
+            "customer_id" : customer_id
+        ])
     }
     
     static func prepare(_ database: Database) throws {

@@ -22,7 +22,7 @@ extension CustomerAddress {
     }
 }
 
-final class CustomerAddressController: ResourceRepresentable {
+final class CustomerShippingController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
         let customer = try request.customer()
@@ -30,23 +30,25 @@ final class CustomerAddressController: ResourceRepresentable {
     }
     
     func create(_ request: Request) throws -> ResponseRepresentable {
-        let _ = try request.customer()
-        
         let address: CustomerAddress = try request.extractModel(injecting: request.customerInjectable())
         try address.save()
+        
         return try address.makeResponse()
     }
     
     func delete(_ request: Request, address: CustomerAddress) throws -> ResponseRepresentable {
         try address.shouldAllow(request: request)
         try address.delete()
+        
         return Response(status: .noContent)
     }
     
     func modify(_ request: Request, address: CustomerAddress) throws -> ResponseRepresentable {
         try address.shouldAllow(request: request)
+        
         let updated: CustomerAddress = try request.patchModel(address)
         try updated.save()
+        
         return try updated.makeResponse()
     }
     
@@ -54,7 +56,7 @@ final class CustomerAddressController: ResourceRepresentable {
         return Resource(
             index: index,
             store: create,
-            modify: modify,
+            update: modify,
             destroy: delete
         )
     }

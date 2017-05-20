@@ -24,11 +24,19 @@ final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
     let state: String
     let zip: String
     
+    var maker_id: Identifier
+    
     init(node: Node) throws {
         address = try node.extract("address")
         city = try node.extract("city")
         state = try node.extract("state")
         zip = try node.extract("zip")
+        
+        if let parent = node.context as? ParentContext {
+            maker_id = parent.parent_id
+        } else {
+            maker_id = try node.extract("maker_id")
+        }
         
         apartment = try? node.extract("apartment")
         
@@ -40,11 +48,12 @@ final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
             "address" : .string(address),
             "city" : .string(city),
             "state" : .string(state),
-            "zip" : .string(zip)
-            ]).add(objects: [
-                "id" : id,
-                "apartment" : apartment
-                ])
+            "zip" : .string(zip),
+            "maker_id" : maker_id
+        ]).add(objects: [
+            "id" : id,
+            "apartment" : apartment
+        ])
     }
     
     static func prepare(_ database: Database) throws {
@@ -55,6 +64,7 @@ final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
             shipping.string("city")
             shipping.string("state")
             shipping.string("zip")
+            shipping.parent(Maker.self)
         }
     }
     

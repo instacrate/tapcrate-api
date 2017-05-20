@@ -96,7 +96,7 @@ extension CustomerController: ResourceRepresentable {
         return Resource(
             index: detail,
             store: create,
-            modify: modify
+            update: modify
         )
     }
 }

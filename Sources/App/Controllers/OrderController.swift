@@ -19,7 +19,7 @@ extension Stripe {
             throw Abort.custom(status: .badRequest, message: "no customer")
         }
 
-        return try order.items().all().forEach { (item: OrderItem) in
+        return try order.items().all().forEach { (item: Subscription) in
             guard
                 let product = try item.product().first(),
                 let maker = try item.maker().first(),
@@ -28,10 +28,14 @@ extension Stripe {
                 throw Abort.custom(status: .internalServerError, message: "malformed order item object")
             }
             
-            let plan = try product.subscriptionPlanIdentifier(for: maker)
+            let plan = try product.subscriptionPlanIdentifier()
             let customer = try maker.connectAccount(for: customer, with: order.card)
             
-            let subscription = try Stripe.shared.subscribe(user: customer, to: plan, oneTime: false, cut: maker.cut, metadata: [:], under: secret)
+            let stripeSubscription = try Stripe.shared.subscribe(user: customer, to: plan, oneTime: false, cut: maker.cut, metadata: [:], under: secret)
+            
+            item.subscribed = true
+            item.subcriptionIdentifier = stripeSubscription.id
+            try item.save()
         }
     }
 }
@@ -80,7 +84,7 @@ final class OrderController: ResourceRepresentable {
         return Resource(
             index: index,
             store: create,
-            modify: modify,
+            update: modify,
             destroy: delete
         )
     }

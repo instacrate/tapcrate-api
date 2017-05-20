@@ -42,11 +42,11 @@ extension StructuredDataWrapper {
         throw try NodeError.unableToConvert(input: self.makeNode(in: nil), expectation: "\(T.self)", path: indexers)
     }
     
-    public func extract<T, InputType: NodeInitializable>(_ indexers: PathIndexer..., transform: (InputType) throws -> T) throws -> T {
+    public func extract<T, InputType: NodeInitializable>(_ indexers: PathIndexer..., in context: Context? = nil, transform: (InputType) throws -> T) throws -> T {
         return try get(path: indexers, transform: transform)
     }
     
-    public func extract<T, InputType: NodeInitializable>(path indexers: [PathIndexer], transform: (InputType) throws -> T) throws -> T {
+    public func extract<T, InputType: NodeInitializable>(path indexers: [PathIndexer], in context: Context? = nil, transform: (InputType) throws -> T) throws -> T {
         if let value = self[indexers], value != .null {
             let input = try InputType(node: value, in: context)
             return try transform(input)
@@ -87,7 +87,7 @@ extension Node {
     
     func add(objects: [String : NodeConvertible?]) throws -> Node {
         guard var previous = self.object else {
-            throw NodeError.invalidContainer(container: "object", element: "self")
+            throw NodeError.unableToConvert(input: self, expectation: "\([String : NodeConvertible].self)", path: [])
         }
         
         for (name, object) in objects {

@@ -113,6 +113,14 @@ extension Product {
 public struct ParentContext: Context {
     
     public let parent_id: Identifier
+    
+    init(id: Identifier?) throws {
+        guard let identifier = id else {
+            throw Abort.custom(status: .internalServerError, message: "Parent context does not have id")
+        }
+        
+        parent_id = identifier
+    }
 }
 
 final class ProductController: ResourceRepresentable {
@@ -213,7 +221,7 @@ final class ProductController: ResourceRepresentable {
         if let pictureNode: [Node] = try? node.extract("pictures") {
             
             let pictures = try pictureNode.map { (object: Node) -> ProductPicture in
-                let context = ParentContext(parent_id: product_id)
+                let context = try ParentContext(id: product_id)
                 let picture: ProductPicture = try ProductPicture(node: Node(object.permit(ProductPicture.permitted).wrapped, in: context))
                 try picture.save()
                 return picture
@@ -261,7 +269,7 @@ final class ProductController: ResourceRepresentable {
             index: index,
             store: create,
             show: show,
-            modify: modify,
+            update: modify,
             destroy: delete
         )
     }

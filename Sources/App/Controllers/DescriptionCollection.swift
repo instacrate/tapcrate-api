@@ -49,11 +49,14 @@ final class DescriptionCollection: RouteCollection, EmptyInitializable {
     
     func build(_ builder: RouteBuilder) {
         
-        builder.get("descriptions", String.init(stringLiteral:)) { request, product in
+        builder.grouped("descriptions").get(String.parameter) { request in
+            let product = try request.parameters.next(String.self)
             return "https://static.polymyr.com/descriptions/\(product)"
         }
         
-        builder.patch("descriptions", String.init(stringLiteral:)) { request, product in
+        builder.grouped("descriptions").patch(String.parameter) { request in
+            let product = try request.parameters.next(String.self)
+            
             guard let product_id = Int(product) else {
                 throw Abort.custom(status: .badRequest, message: "Invalid product id")
             }

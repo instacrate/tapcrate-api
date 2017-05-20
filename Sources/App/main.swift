@@ -29,19 +29,22 @@ drop.group(middleware: [PersistMiddleware(Customer.self), PersistMiddleware(Make
     
     persistable.resource("makers", MakerController())
     persistable.picture(base: "makers", slug: "makers_id", picture: PictureController<MakerPicture, Maker>())
+    persistable.resource("makerAddresses", MakerAddressController())
     
     persistable.resource("customers", CustomerController())
     persistable.picture(base: "customers", slug: "customer_id", picture: PictureController<CustomerPicture, Customer>())
+    persistable.resource("customerAddresses", CustomerShippingController())
     
     persistable.resource("products", ProductController())
     persistable.picture(base: "products", slug: "products_id", picture: PictureController<ProductPicture, Product>())
     
-    persistable.resource("customerAddresses", CustomerAddressController())
     persistable.resource("tags", TagController())
     try! persistable.collection(DescriptionCollection.self)
     
     persistable.resource("offers", OfferController())
     try! persistable.collection(TrackingCollection.self)
+    
+    persistable.resource("orders", OrderController())
     
     StripeCollection().build(persistable)
     DescriptionCollection().build(persistable)
@@ -50,6 +53,8 @@ drop.group(middleware: [PersistMiddleware(Customer.self), PersistMiddleware(Make
         return try Product.makeQuery().all().map { $0.name }.makeResponse()
     }
 }
+
+print(drop.router.routes)
 
 do {
     try drop.run()

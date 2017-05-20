@@ -42,7 +42,7 @@ final class VariantController: ResourceRepresentable {
         return Resource(
             index: index,
             store: create,
-            modify: modify,
+            update: modify,
             destroy: delete
         )
     }

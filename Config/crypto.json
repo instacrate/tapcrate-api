@@ -5,6 +5,7 @@
         "key": "password"
     },
     "cipher": {
+        "encoding" : "plain",
         "method": "aes256",
         "key": "passwordpasswordpasswordpassword"
     }

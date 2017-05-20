@@ -16,10 +16,10 @@ public struct StripeHTTPError: AbortError {
     public let reason: String
     public let metadata: Node?
 
-    init(node: Node, code: Status) {
+    init(node: Node, code: Status, resource: String) {
         self.metadata = node
         self.status = code
-        self.reason = "Stripe Error"
+        self.reason = "Stripe Error at \(resource)"
     }
 }
 
@@ -92,7 +92,7 @@ public class HTTPClient {
     
     private func checkForStripeError(in json: JSON, from resource: String) throws {
         if json["error"] != nil {
-            throw StripeHTTPError(node: json.node, code: .internalServerError)
+            throw StripeHTTPError(node: json.node, code: .internalServerError, resource: resource)
         }
     }
 }

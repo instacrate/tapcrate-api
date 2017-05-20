@@ -42,7 +42,8 @@ final class TagController: ResourceRepresentable {
         return Resource(
             index: index,
             store: create,
-            modify: modify,
+            show: show,
+            update: modify,
             destroy: delete
         )
     }

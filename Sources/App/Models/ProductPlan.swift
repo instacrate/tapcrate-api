@@ -17,13 +17,12 @@ final class ProductPlan: Model, Preparation, NodeConvertible {
     
     let product_id: Identifier
     let maker_id: Identifier
-    
     let plan_id: String
     
-    init(product: Product, maker: Maker) throws {
+    init(product: Product, maker: Maker, plan_id: String) throws {
         maker_id = maker.id!
         product_id = product.id!
-        plan_id = UUID().uuidString
+        self.plan_id = plan_id
     }
     
     init(node: Node) throws {

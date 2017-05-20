@@ -35,13 +35,12 @@ final class MakerController: ResourceRepresentable {
     }
     
     func create(_ request: Request) throws -> ResponseRepresentable {
-        let maker: Maker = try request.extractModel()
+        let maker = try Maker.createMaker(from: request)
         
-        if try Maker.makeQuery().filter("username", maker.username).count() > 0 {
-            throw Abort.custom(status: .badRequest, message: "Username is taken.")
-        }
-        
-        try maker.save()
+        // TODO :
+//        if try Maker.makeQuery().filter("username", maker.username).count() > 0 {
+//            throw Abort.custom(status: .badRequest, message: "Username is taken.")
+//        }
         
         request.auth.authenticate(maker)
         
@@ -68,7 +67,7 @@ final class MakerController: ResourceRepresentable {
             index: index,
             store: create,
             show: show,
-            modify: modify
+            update: modify
         )
     }
 }

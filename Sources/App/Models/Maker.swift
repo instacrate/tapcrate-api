@@ -38,6 +38,23 @@ enum ApplicationState: String, NodeConvertible {
 
 final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitializable, SessionPersistable {
     
+    static func createMaker(from request: Request) throws -> Maker {
+        guard let node = request.json?.node else {
+            throw Abort.custom(status: .badRequest, message: "Missing JSON body.")
+        }
+        
+        let maker: Maker = try request.extractModel()
+        try maker.save()
+        
+        if var addressNode: Node = try node.extract("address") {
+            addressNode.context = try ParentContext(id: maker.id)
+            let makerAddress = try MakerAddress(node: addressNode)
+            try makerAddress.save()
+        }
+        
+        return maker
+    }
+    
     let storage = Storage()
     
     static var permitted: [String] = ["email", "businessName", "publicWebsite", "contactName", "contactPhone", "contactEmail", "location", "createdOn", "cut", "username", "stripe_id", "keys", "missingFields", "needsIdentityUpload", "maker_address_id", "password"]
@@ -49,7 +66,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
     let contactName: String
     let contactPhone: String
     let contactEmail: String
-    let maker_address_id: Identifier?
     
     let location: String
     let createdOn: Date
@@ -89,7 +105,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
         contactName = try node.extract("contactName")
         contactPhone = try node.extract("contactPhone")
         contactEmail = try node.extract("contactEmail")
-        maker_address_id = try? node.extract("maker_address_id")
         
         location = try node.extract("location")
         createdOn = (try? node.extract("createdOn")) ?? Date()
@@ -134,7 +149,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
             "stripe_id" : stripe_id,
             "publishableKey" : keys?.publishable,
             "secretKey" : keys?.secret,
-            "maker_address_id" : maker_address_id,
             "sub_id" : sub_id,
             "createdOn" : Node.date(createdOn).string,
             "password" : (context?.isRow ?? false) ? password : nil
@@ -151,7 +165,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
             maker.string("contactName")
             maker.string("contactPhone")
             maker.string("contactEmail")
-            maker.parent(MakerAddress.self, optional: true)
             
             maker.string("location")
             maker.string("createdOn")
@@ -186,8 +199,8 @@ extension Maker {
         return children()
     }
     
-    func address() -> Parent<Maker, MakerAddress> {
-        return parent(id: maker_address_id)
+    func addresses() -> Children<Maker, MakerAddress> {
+        return children()
     }
 
     func orders() -> Children<Maker, Order> {
@@ -213,7 +226,8 @@ extension Maker {
             let hasPaymentMethod = try Stripe.shared.paymentInformation(for: connectAccount.stripeCustomerId, under: secretKey).filter { $0.id == card }.count > 0
             
             if !hasPaymentMethod {
-                let token = try Stripe.shared.createToken(for: connectAccount.stripeCustomerId, representing: card, on: secretKey)
+                // TODO : right now we hit this every time....
+                let token = try Stripe.shared.createToken(for: stripeCustomerId, representing: card, on: secretKey)
                 let _ = try Stripe.shared.associate(source: token.id, withStripe: connectAccount.stripeCustomerId, under: secretKey)
             }
             
@@ -226,17 +240,6 @@ extension Maker {
             try connectAccount.save()
             
             return connectAccount.stripeCustomerId
-        }
-    }
-}
-
-extension BCryptHasher: PasswordVerifier {
-    
-    public func verify(password: Bytes, matches hash: Bytes) throws -> Bool {
-        do {
-            return try self.check(password, matchesHash: hash)
-        } catch {
-            throw Abort.custom(status: .unauthorized, message: "error matching hash \(error)")
         }
     }
 }
