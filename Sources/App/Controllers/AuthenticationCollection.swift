@@ -60,11 +60,11 @@ final class ProviderData: NodeConvertible {
         return try Node(node: [
             "displayName" : .string(displayName),
             "email" : .string(email),
-            ]).add(objects: [
-                "uid" : uid,
-                "photoURL" : photoURL,
-                "providerId" : providerId
-                ])
+        ]).add(objects: [
+            "uid" : uid,
+            "photoURL" : photoURL,
+            "providerId" : providerId
+        ])
     }
 }
 
@@ -123,7 +123,7 @@ final class AuthenticationCollection {
             guard
                 let token: String = try request.json?.extract("token"),
                 let subject: String = try request.json?.extract("subject")
-                else {
+            else {
                     throw AuthenticationError.notAuthenticated
             }
             
@@ -162,8 +162,8 @@ final class AuthenticationCollection {
             
             // TODO : IssuedAtClaim should be in the past
             let claims = [ExpirationTimeClaim(createTimestamp: { return Seconds(Date().timeIntervalSince1970) }, leeway: 60),
-                          AudienceClaim(string: "polymyr-a5014"),
-                          IssuerClaim(string: "https://securetoken.google.com/polymyr-a5014"),
+                          AudienceClaim(string: "tapcrate"),
+                          IssuerClaim(string: "https://securetoken.google.com/tapcrate"),
                           SubjectClaim(string: subject)] as [Claim]
             
             do {
