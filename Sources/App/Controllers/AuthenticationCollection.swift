@@ -243,7 +243,9 @@ final class AuthenticationCollection {
                 throw AuthenticationError.notAuthenticated
             }
             
-            return try T.init(subject: subject, request: request)
+            let subject = try T.init(subject: subject, request: request)
+            try subject.save()
+            return subject
         } else {
             throw AuthenticationError.notAuthenticated
         }
