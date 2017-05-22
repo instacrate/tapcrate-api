@@ -49,13 +49,13 @@ final class OrderController: ResourceRepresentable {
         case .customer:
             return try request.customer().orders().all().makeResponse()
         case .maker:
-            var query = try request.maker().orders().makeQuery()
+            var query = try request.maker().subscriptions().makeQuery()
 
             if let fulfilled = request.query?["fulfilled"]?.bool {
                 query = try query.filter("fulfilled", fulfilled)
             }
 
-            return try request.maker().orders().all().makeResponse()
+            return try query.all().makeResponse()
         case .anonymous:
             return try Order.all().makeResponse()
         }

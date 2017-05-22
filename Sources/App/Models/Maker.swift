@@ -203,7 +203,7 @@ extension Maker {
         return children()
     }
 
-    func orders() -> Children<Maker, Order> {
+    func subscriptions() -> Children<Maker, Subscription> {
         return children()
     }
 }
