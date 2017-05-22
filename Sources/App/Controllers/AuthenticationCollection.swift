@@ -106,7 +106,7 @@ final class AuthenticationCollection {
     
     func build(_ builder: RouteBuilder) {
         
-        builder.grouped(PasswordAuthenticationMiddleware(Maker.self)).post("login") { request in
+        builder.grouped(PasswordAuthenticationMiddleware__(Maker.self)).post("login") { request in
             guard let maker = request.auth.authenticated(Maker.self) else {
                 if drop.config.environment == .development {
                     throw Abort.custom(status: .badRequest, message: "Could not fetch authenticated user. \(request.storage.description)")
