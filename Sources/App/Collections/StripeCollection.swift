@@ -12,65 +12,6 @@ import Vapor
 import Node
 import Foundation
 
-extension Sequence where Iterator.Element == Bool {
-    
-    public func all() -> Bool {
-        return reduce(true) { $0 && $1 }
-    }
-}
-
-extension Sequence where Iterator.Element == (key: String, value: String) {
-    
-    func reduceDictionary() -> [String : String] {
-        return flatMap { $0 }.reduce([:]) { (_dict, tuple) in
-            var dict = _dict
-            dict.updateValue(tuple.1, forKey: tuple.0)
-            return dict
-        }
-    }
-}
-
-fileprivate func stripeKeyPathFor(base: String, appending: String) -> String {
-    if base.characters.count == 0 {
-        return appending
-    }
-    
-    return "\(base)[\(appending)]"
-}
-
-extension StructuredData {
-    
-    var isLeaf : Bool {
-        switch self {
-        case .array(_), .object(_):
-            return false
-            
-        case .bool(_), .bytes(_), .string(_), .number(_), .null, .date(_):
-            return true
-        }
-    }
-    
-    func collected() throws -> [String : String] {
-        return collectLeaves(prefix: "")
-    }
-    
-    private func collectLeaves(prefix: String) -> [String : String] {
-        switch self {
-        case let .array(nodes):
-            return nodes.map { $0.collectLeaves(prefix: prefix) }.joined().reduceDictionary()
-            
-        case let .object(object):
-            return object.map { $1.collectLeaves(prefix: stripeKeyPathFor(base: prefix, appending: $0)) }.joined().reduceDictionary()
-            
-        case .bool(_), .bytes(_), .string(_), .number(_), .date(_):
-            return [prefix : string ?? ""]
-            
-        case .null:
-            return [:]
-        }
-    }
-}
-
 class StripeCollection: EmptyInitializable {
     
     required init() { }
@@ -186,11 +127,11 @@ class StripeCollection: EmptyInitializable {
                     
                     return try Node(node :[
                         "fields" : try account.descriptionsForNeededFields().makeNode(in: emptyContext)
-                        ]).add(objects: [
-                            "due_by" : account.verification.due_by.flatMap { Node.date($0).string },
-                            "disabled_reason" : account.verification.disabled_reason?.rawValue,
-                            "identity" : account.legal_entity.verification.status != .verified ? account.legal_entity.verification.makeNode(in: emptyContext) : nil
-                            ]).makeResponse()
+                    ]).add(objects: [
+                        "due_by" : account.verification.due_by.flatMap { Node.date($0).string },
+                        "disabled_reason" : account.verification.disabled_reason?.rawValue,
+                        "identity" : account.legal_entity.verification.status != .verified ? account.legal_entity.verification.makeNode(in: emptyContext) : nil
+                    ]).makeResponse()
                 }
                 
                 maker.get("payouts") { request in

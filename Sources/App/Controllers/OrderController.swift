@@ -10,6 +10,7 @@ import HTTP
 import Vapor
 import Fluent
 import FluentProvider
+import Dollar
 
 extension Stripe {
     
@@ -40,6 +41,14 @@ extension Stripe {
     }
 }
 
+extension Node {
+    
+    mutating func replace(relation at: String, with relation: Node) {
+        self["\(at)_id"] = nil
+        self[at] = relation
+    }
+}
+
 final class OrderController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
@@ -54,8 +63,25 @@ final class OrderController: ResourceRepresentable {
             if let fulfilled = request.query?["fulfilled"]?.bool {
                 query = try query.filter("fulfilled", fulfilled)
             }
-
-            return try query.all().makeResponse()
+            
+            let subscriptions = try query.all()
+            
+            let groupedSubscriptions = $.groupBy(subscriptions) {
+                return $0.id!.int!
+            }
+            
+            let subIds = Array(groupedSubscriptions.keys).map { Node.number(.int($0)) }
+            let orders = try Order.makeQuery().filter(.subset(Order.idKey, .in, subIds)).all()
+            
+            var result: [Node] = []
+            
+            for order in orders {
+                var orderNode = try order.makeNode(in: jsonContext)
+                orderNode["subscriptions"] = try groupedSubscriptions[order.id!.int!].makeNode(in: jsonContext)
+                result.append(orderNode)
+            }
+            
+            return try subscriptions.makeResponse()
         case .anonymous:
             return try Order.all().makeResponse()
         }
@@ -64,8 +90,6 @@ final class OrderController: ResourceRepresentable {
     func create(_ request: Request) throws -> ResponseRepresentable {
         var order = try Order.createOrder(for: request)
         try Stripe.shared.charge(order: &order)
-        try order.save()
-        
         return try order.makeResponse()
     }
     

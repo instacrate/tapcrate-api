@@ -16,6 +16,7 @@ import Console
 import MySQLProvider
 import AuthProvider
 import Sessions
+import Cookies
 
 final class FluentCacheProvider: Vapor.Provider {
     
@@ -25,7 +26,12 @@ final class FluentCacheProvider: Vapor.Provider {
     
     func boot(_ config: Config) throws {
         let cache = try config.resolveCache()
-        config.addConfigurable(middleware: { _ in SessionsMiddleware(CacheSessions(cache)) }, name: "fluent-sessions")
+        
+        config.addConfigurable(middleware: { _ in
+            return SessionsMiddleware(CacheSessions(cache), cookieFactory: { (request) -> Cookie in
+                return Cookie(name: "vapor-session", value: "", httpOnly: true)
+            })
+        }, name: "fluent-sessions")
     }
     
     func boot(_ droplet: Droplet) throws { }

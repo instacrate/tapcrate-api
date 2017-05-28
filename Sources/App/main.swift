@@ -14,29 +14,6 @@ import HTTP
 import AuthProvider
 import Foundation
 
-public final class PasswordAuthenticationMiddleware__<U: PasswordAuthenticatable>: Middleware {
-    public let passwordVerifier: PasswordVerifier?
-    public init(
-        _ userType: U.Type = U.self,
-        _ passwordVerifier: PasswordVerifier? = nil
-        ) {
-        self.passwordVerifier = passwordVerifier
-    }
-    
-    public func respond(to req: Request, chainingTo next: Responder) throws -> Response {
-        
-        guard let password = req.auth.header?.basic else {
-            throw AuthenticationError.invalidCredentials
-        }
-        
-        let u = try U.authenticate(password)
-        
-        req.auth.authenticate(u)
-        
-        return try next.respond(to: req)
-    }
-}
-
 let drop = Droplet.create()
 
 let formatter = DateFormatter()
