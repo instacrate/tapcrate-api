@@ -27,7 +27,7 @@ final class Subscription: Model, Preparation, NodeConvertible, Sanitizable {
     let fulfilled: Bool
     var subscribed: Bool
     let oneTime: Bool
-    let variants: String?
+    let variants: [String: String]?
     
     var subcriptionIdentifier: String?
     
@@ -51,10 +51,20 @@ final class Subscription: Model, Preparation, NodeConvertible, Sanitizable {
         subscribed = (try? node.extract("subscribed")) ?? false
         fulfilled = (try? node.extract("fulfilled")) ?? false
         oneTime = (try? node.extract("oneTime")) ?? false
-    
-        variants = try? node.extract("variant")
-        
+        variants = try node["variants"]?.object?.converted(in: emptyContext)
+
         id = try? node.extract("id")
+    }
+    
+    convenience init(row: Row) throws {
+        var node = row.converted(to: Node.self)
+        
+        if let bytes: String = try? row.extract("variants") {
+            let parsed = try JSON(bytes: bytes.makeBytes())
+            node["variants"] = parsed.converted(to: Node.self)
+        }
+        
+        try self.init(node: node)
     }
     
     func makeNode(in context: Context?) throws -> Node {
