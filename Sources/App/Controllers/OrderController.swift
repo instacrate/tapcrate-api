@@ -10,7 +10,6 @@ import HTTP
 import Vapor
 import Fluent
 import FluentProvider
-import Dollar
 
 extension Stripe {
     
@@ -49,6 +48,26 @@ extension Node {
     }
 }
 
+extension Sequence where Iterator.Element: Hashable {
+    func unique() -> [Iterator.Element] {
+        var seen: [Iterator.Element: Bool] = [:]
+        return self.filter { seen.updateValue(true, forKey: $0) == nil }
+    }
+}
+
+public extension Sequence {
+    func group<U: Hashable>(by key: (Iterator.Element) -> U) -> [U:[Iterator.Element]] {
+        var categories: [U: [Iterator.Element]] = [:]
+        for element in self {
+            let key = key(element)
+            if case nil = categories[key]?.append(element) {
+                categories[key] = [element]
+            }
+        }
+        return categories
+    }
+}
+
 final class OrderController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
@@ -62,17 +81,17 @@ final class OrderController: ResourceRepresentable {
                 return try Node.array([]).makeResponse()
             }
             
-            let orderIds = try $.uniq(orders.map { $0.id!.int! }).converted(to: Array<Node>.self, in: jsonContext)
+            let orderIds = try orders.map { $0.id!.int! }.unique().converted(to: Array<Node>.self, in: jsonContext)
             let subscriptions = try Subscription.makeQuery().filter(.subset(Order.foreignIdKey, .in, orderIds)).all()
             
-            let groupedSubscriptions = $.groupBy(subscriptions) {
+            let groupedSubscriptions = subscriptions.group() {
                 return $0.order_id.int!
             }
             
-            let addressIds = try $.uniq(orders.map { $0.customer_address_id.int! }).converted(to: Array<Node>.self, in: jsonContext)
+            let addressIds = try orders.map { $0.customer_address_id.int! }.unique().converted(to: Array<Node>.self, in: jsonContext)
             let addresses = try CustomerAddress.makeQuery().filter(.subset(CustomerAddress.idKey, .in, addressIds)).all()
             
-            let makerIds = try $.uniq(subscriptions.map { $0.maker_id.int! }).converted(to: Array<Node>.self, in: jsonContext)
+            let makerIds = try subscriptions.map { $0.maker_id.int! }.unique().converted(to: Array<Node>.self, in: jsonContext)
             let makers = try Maker.makeQuery().filter(.subset(Maker.idKey, .in, makerIds)).all()
             
             var result: [Node] = []
@@ -116,17 +135,17 @@ final class OrderController: ResourceRepresentable {
                 return try Node.array([]).makeResponse()
             }
             
-            let groupedSubscriptions = $.groupBy(subscriptions) {
+            let groupedSubscriptions = subscriptions.group() {
                 return $0.order_id.int!
             }
             
             let subIds = try Array(groupedSubscriptions.keys).converted(to: Array<Node>.self, in: jsonContext)
             let orders = try Order.makeQuery().filter(.subset(Order.idKey, .in, subIds)).all()
             
-            let addressIds = try $.uniq(orders.map { $0.customer_address_id.int! }).converted(to: Array<Node>.self, in: jsonContext)
+            let addressIds = try orders.map { $0.customer_address_id.int! }.unique().converted(to: Array<Node>.self, in: jsonContext)
             let addresses = try CustomerAddress.makeQuery().filter(.subset(CustomerAddress.idKey, .in, addressIds)).all()
             
-            let customerIds = try $.uniq(orders.map { $0.customer_id.int! }).converted(to: Array<Node>.self, in: jsonContext)
+            let customerIds = try orders.map { $0.customer_id.int! }.unique().converted(to: Array<Node>.self, in: jsonContext)
             let customers = try Customer.makeQuery().filter(.subset(Customer.idKey, .in, customerIds)).all()
             
             var result: [Node] = []
