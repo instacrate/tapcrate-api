@@ -43,6 +43,8 @@ drop.group(middleware: persist) { persistable in
     persistable.resource("products", ProductController())
     persistable.picture(base: "products", slug: "products_id", picture: PictureController<ProductPicture, Product>())
     
+    persistable.resource("reviews", ReviewController())
+    
     persistable.resource("tags", TagController())
     try! persistable.collection(DescriptionCollection.self)
     

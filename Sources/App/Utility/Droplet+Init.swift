@@ -77,7 +77,8 @@ extension Droplet {
                 Offer.self,
                 Pivot<Offer, Customer>.self,
                 Subscription.self,
-                PageView.self
+                PageView.self,
+                Review.self
             ] as [Preparation.Type]
 
             let drop = try Droplet(config)
