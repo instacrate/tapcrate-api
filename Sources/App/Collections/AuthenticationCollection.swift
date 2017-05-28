@@ -12,10 +12,11 @@ import Fluent
 import FluentProvider
 import Routing
 import Node
-import JWT
 import AuthProvider
 import CTLS
 import Crypto
+
+import JWT
 
 enum SessionType: String, TypesafeOptionsParameter {
     case customer
@@ -85,10 +86,12 @@ extension RSASigner {
         guard let cert = _cert else {
             throw Abort.custom(status: .internalServerError, message: "Failed to decode certificate.")
         }
+        defer { BIO_free(cert_bio) }
         
         guard let publicKey = X509_get_pubkey(cert) else {
             throw Abort.custom(status: .internalServerError, message: "Failed to decode public key.")
         }
+        defer { X509_free(publicKey) }
         
         guard let rsa = EVP_PKEY_get1_RSA(publicKey) else {
             throw Abort.custom(status: .internalServerError, message: "Failed to get rsa key.")
