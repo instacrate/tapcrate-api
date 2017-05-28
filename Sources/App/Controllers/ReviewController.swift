@@ -41,6 +41,11 @@ final class ReviewController: ResourceRepresentable {
         return try review.makeResponse()
     }
     
+    func delete(_ request: Request, review: Review) throws -> ResponseRepresentable {
+        try review.delete()
+        return Response(status: .noContent)
+    }
+    
     func makeResource() -> Resource<Review> {
         return Resource(
             store: create,

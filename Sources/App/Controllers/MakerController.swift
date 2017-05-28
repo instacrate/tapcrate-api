@@ -26,7 +26,20 @@ extension Maker {
 final class MakerController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
-        return try request.maker().makeResponse()
+        let maker = try request.maker()
+        
+        if let expander: Expander<Maker> = try request.extract() {
+            return try expander.expand(for: maker, mappings: { (relation, models, ids) -> [NodeRepresentable] in
+                switch relation {
+                    case "pictures":
+                        return try [maker.pictures().all()]
+                    default:
+                        throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(relation) on \(type(of: self)).")
+                }
+            }).makeResponse()
+        }
+        
+        return try maker.makeResponse()
     }
     
     func show(_ request: Request, maker: Maker) throws -> ResponseRepresentable {

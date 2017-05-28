@@ -94,6 +94,10 @@ extension Product {
     func variants() -> Children<Product, Variant> {
         return children()
     }
+    
+    func reviews() -> Children<Product, Review> {
+        return children()
+    }
 }
 
 extension Product {

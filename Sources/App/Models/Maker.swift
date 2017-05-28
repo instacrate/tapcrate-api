@@ -206,6 +206,10 @@ extension Maker {
     func subscriptions() -> Children<Maker, Subscription> {
         return children()
     }
+    
+    func pictures() -> Children<Maker, MakerPicture> {
+        return children()
+    }
 }
 
 extension Maker {
