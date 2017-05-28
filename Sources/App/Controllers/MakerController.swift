@@ -42,7 +42,7 @@ final class MakerController: ResourceRepresentable {
 //            throw Abort.custom(status: .badRequest, message: "Username is taken.")
 //        }
         
-        request.auth.authenticate(maker)
+        request.multipleUserAuth.authenticate(maker)
         
         let account = try Stripe.shared.createManagedAccount(email: maker.contactEmail, local_id: maker.id?.int)
         

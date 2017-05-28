@@ -24,7 +24,7 @@ final class AuthenticationCollection {
     func build(_ builder: RouteBuilder) {
         
         builder.grouped(OverridingPasswordAuthenticationMiddleware(Maker.self)).post("login") { request in
-            guard let maker = request.auth.authenticated(Maker.self) else {
+            guard let maker = request.multipleUserAuth.authenticated(Maker.self) else {
                 if drop.config.environment == .development {
                     throw Abort.custom(status: .badRequest, message: "Could not fetch authenticated user. \(request.storage.description)")
                 } else {

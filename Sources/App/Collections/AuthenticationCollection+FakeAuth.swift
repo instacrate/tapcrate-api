@@ -26,7 +26,7 @@ extension AuthenticationCollection {
                 throw AuthenticationError.notAuthenticated
             }
             
-            try request.auth.authenticate(customer, persist: true)
+            request.multipleUserAuth.authenticate(customer)
             return try customer.makeResponse()
             
         case .maker:
@@ -34,7 +34,7 @@ extension AuthenticationCollection {
                 throw AuthenticationError.notAuthenticated
             }
             
-            try request.auth.authenticate(maker, persist: true)
+            request.multipleUserAuth.authenticate(maker)
             return try maker.makeResponse()
             
         case .anonymous:

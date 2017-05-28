@@ -48,12 +48,12 @@ extension AuthenticationCollection {
         switch type {
         case .customer:
             let customer = try getAuthenticationSubject(subject: subject, request: request, create: create) as Customer
-            try request.auth.authenticate(customer, persist: true)
+            request.multipleUserAuth.authenticate(customer)
             return customer
             
         case .maker:
             let maker = try getAuthenticationSubject(subject: subject, request: request, create: create) as Maker
-            try request.auth.authenticate(maker, persist: true)
+            request.multipleUserAuth.authenticate(maker)
             return maker
             
         case .anonymous:

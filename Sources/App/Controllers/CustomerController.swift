@@ -21,17 +21,6 @@ enum FetchType: String, TypesafeOptionsParameter {
     static var defaultValue: FetchType? = nil
 }
 
-extension Request {
-    
-    func customer() throws -> Customer {
-        return try auth.assertAuthenticated(Customer.self)
-    }
-    
-    func maker() throws -> Maker {
-        return try auth.assertAuthenticated(Maker.self)
-    }
-}
-
 extension Customer {
     
     func shouldAllow(request: Request) throws {
@@ -76,8 +65,8 @@ final class CustomerController {
         }
         
         try customer.save()
+        request.multipleUserAuth.authenticate(customer)
         
-        request.auth.authenticate(customer)
         return try customer.makeResponse()
     }
     

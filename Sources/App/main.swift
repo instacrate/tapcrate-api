@@ -23,7 +23,12 @@ formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssXXXXX"
 
 Date.incomingDateFormatters.append(formatter)
 
-drop.group(middleware: [PersistMiddleware(Customer.self), PersistMiddleware(Maker.self)]) { persistable in
+let persist: [Middleware] = [
+    MultipleUserPersistMiddleware(Customer.self),
+    MultipleUserPersistMiddleware(Maker.self)
+]
+
+drop.group(middleware: persist) { persistable in
     
     AuthenticationCollection().build(persistable)
     
