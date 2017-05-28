@@ -13,7 +13,7 @@ import HTTP
 extension SessionPersistable where Self: Entity {
     
     private static func key<T>(for: T.Type) -> String {
-        return "session-entitiy-id-\(T.self)"
+        return "session-entity-id-\(T.self)"
     }
     
     public func persist(for req: Request) throws {
