@@ -17,6 +17,11 @@ import JWT
 
 final class AuthenticationCollection {
     
+    static let tokenKey = "token"
+    static let subjectKey = "subject"
+    
+    static let testingPrefix = "__testing__"
+    
     typealias AuthenticationSubject = Entity & Authenticatable & JWTInitializable & NodeConvertible & Persistable
     
     var keys: [String : String] = [:]
@@ -39,13 +44,14 @@ final class AuthenticationCollection {
             
             let payload = try request.json()
             
-            let token: String = try payload.extract("token")
-            let subject: String = try payload.extract("subject")
+            let token: String = try payload.extract(AuthenticationCollection.tokenKey)
+            let subject: String = try payload.extract(AuthenticationCollection.subjectKey)
         
             let jwt = try JWT(token: token)
             
-            if drop.config.environment == .development && subject.hasPrefix("__testing__") {
-                return try self.performFakeLogin(with: jwt, for: subject, from: request)
+            if drop.config.environment == .development && subject.hasPrefix(AuthenticationCollection.testingPrefix) {
+                let removed = subject.replacingOccurrences(of: AuthenticationCollection.testingPrefix, with: "")
+                return try self.performFakeLogin(with: jwt, for: removed, from: request)
             }
             
             let keyId: String = try jwt.headers.extract("kid")

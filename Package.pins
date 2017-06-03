@@ -29,7 +29,7 @@
       "package": "CMySQL",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/cmysql.git",
-      "version": "2.0.1"
+      "version": "2.0.2"
     },
     {
       "package": "CTLS",
@@ -62,12 +62,6 @@
       "version": "1.0.0"
     },
     {
-      "package": "Dollar",
-      "reason": null,
-      "repositoryURL": "https://github.com/ankurp/Dollar",
-      "version": "6.2.0"
-    },
-    {
       "package": "Engine",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/engine.git",
@@ -94,8 +88,8 @@
     {
       "package": "JWT",
       "reason": null,
-      "repositoryURL": "https://github.com/vapor/jwt.git",
-      "version": "2.1.0"
+      "repositoryURL": "https://github.com/instacrate/jwt.git",
+      "version": "2.1.1"
     },
     {
       "package": "Multipart",
@@ -107,7 +101,7 @@
       "package": "MySQL",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/mysql.git",
-      "version": "2.0.0"
+      "version": "2.0.1"
     },
     {
       "package": "MySQLDriver",
@@ -125,7 +119,7 @@
       "package": "Node",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/node.git",
-      "version": "2.0.1"
+      "version": "2.0.3"
     },
     {
       "package": "Random",
@@ -155,13 +149,13 @@
       "package": "TLS",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/tls.git",
-      "version": "2.0.1"
+      "version": "2.0.4"
     },
     {
       "package": "Vapor",
       "reason": null,
       "repositoryURL": "https://github.com/vapor/vapor.git",
-      "version": "2.0.3"
+      "version": "2.0.5"
     }
   ],
   "version": 1

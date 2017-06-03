@@ -12,12 +12,14 @@ import HTTP
 
 extension AuthenticationCollection {
     
+    static let googleKeySource = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+    
     func fetchSigningKey(for identifier: String) throws -> String {
         if let key = keys[identifier] {
             return key
         }
         
-        let response = try drop.client.get("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com")
+        let response = try drop.client.get(AuthenticationCollection.googleKeySource)
         
         guard let fetchedKeys = response.json?.object else {
             throw Abort.custom(status: .internalServerError, message: "Could not get new signing keys.")

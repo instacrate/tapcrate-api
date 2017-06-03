@@ -14,7 +14,7 @@ import Vapor
 extension AuthenticationCollection {
     
     func performFakeLogin(with token: JWT, for subject: String, from request: Request) throws -> Response {
-        guard let newSubject = subject.replacingOccurrences(of: "__testing__", with: "").int else {
+        guard let authenticationId = subject.int else {
             throw AuthenticationError.notAuthenticated
         }
         
@@ -22,7 +22,7 @@ extension AuthenticationCollection {
         
         switch type {
         case .customer:
-            guard let customer = try Customer.find(newSubject) else {
+            guard let customer = try Customer.find(authenticationId) else {
                 throw AuthenticationError.notAuthenticated
             }
             
@@ -30,7 +30,7 @@ extension AuthenticationCollection {
             return try customer.makeResponse()
             
         case .maker:
-            guard let maker = try Maker.find(newSubject) else {
+            guard let maker = try Maker.find(authenticationId) else {
                 throw AuthenticationError.notAuthenticated
             }
             
