@@ -56,6 +56,7 @@ drop.group(middleware: persist) { persistable in
     
     StripeCollection().build(persistable)
     DescriptionCollection().build(persistable)
+    TagCollection().build(persistable)
     
     persistable.get("search") { request in
         return try Product.makeQuery().all().map { $0.name }.makeResponse()

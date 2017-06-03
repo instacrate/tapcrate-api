@@ -24,4 +24,12 @@ extension Model {
         
         return customerIdInt
     }
+    
+    func id() throws -> Identifier {
+        guard let id = id else {
+            throw Abort.custom(status: .internalServerError, message: "Bad internal state. \(type(of: self).entity) does not have database id when it was requested.")
+        }
+        
+        return id
+    }
 }
