@@ -52,6 +52,11 @@ if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- nginx/)" ]; then
 	fi
 fi
 
+if [ "$(git diff --name-only 1de5cfdbe6753a6883dd14492f88ccf64567b277 -- update.sh)" ]; then
+	echo "\n>>>> vapor fetch --verbose"
+	vapor fetch --verbose
+fi
+
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
 	echo "\n>>>> vapor build --release=true --fetch=false --verbose"
 	vapor build --release=true --fetch=false --verbose
