@@ -17,7 +17,7 @@ final class Subscription: Model, Preparation, NodeConvertible, Sanitizable {
     
     var storage = Storage()
     
-    static var permitted: [String] = ["product_id", "offer_id", "variants", "oneTime"]
+    static var permitted: [String] = ["product_id", "offer_id", "order_id", "fulfilled", "variants", "oneTime"]
     
     let product_id: Identifier
     let offer_id: Identifier?
