@@ -40,34 +40,6 @@ extension Stripe {
     }
 }
 
-extension Node {
-    
-    mutating func replace(relation at: String, with relation: Node?) {
-        self["\(at)_id"] = nil
-        self[at] = relation
-    }
-}
-
-extension Sequence where Iterator.Element: Hashable {
-    func unique() -> [Iterator.Element] {
-        var seen: [Iterator.Element: Bool] = [:]
-        return self.filter { seen.updateValue(true, forKey: $0) == nil }
-    }
-}
-
-public extension Sequence {
-    func group<U: Hashable>(by key: (Iterator.Element) -> U) -> [U:[Iterator.Element]] {
-        var categories: [U: [Iterator.Element]] = [:]
-        for element in self {
-            let key = key(element)
-            if case nil = categories[key]?.append(element) {
-                categories[key] = [element]
-            }
-        }
-        return categories
-    }
-}
-
 final class OrderController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
@@ -169,6 +141,30 @@ final class OrderController: ResourceRepresentable {
         }
     }
     
+    func show(_ request: Request, order: Order) throws -> ResponseRepresentable {
+        
+        let type: SessionType = try request.extract()
+        
+        switch type {
+        case .customer: fallthrough
+        case .anonymous:
+            return try order.makeResponse()
+            
+        case .maker:
+            let subscriptions = try order.items().all()
+            let address = try order.address().all()[0]
+            let customer = try order.customer().all()[0]
+        
+            var orderNode = try order.makeNode(in: jsonContext)
+        
+            try orderNode["subscriptions"] = subscriptions.makeNode(in: jsonContext)
+            try orderNode.replace(relation: "customer_address", with: address.makeNode(in: jsonContext))
+            try orderNode.replace(relation: "customer", with: customer.makeNode(in: jsonContext))
+        
+            return try orderNode.makeResponse()
+        }
+    }
+    
     func create(_ request: Request) throws -> ResponseRepresentable {
         var order = try Order.createOrder(for: request)
         try Stripe.shared.charge(order: &order)
@@ -190,6 +186,7 @@ final class OrderController: ResourceRepresentable {
         return Resource(
             index: index,
             store: create,
+            show: show,
             update: modify,
             destroy: delete
         )

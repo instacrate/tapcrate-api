@@ -195,7 +195,7 @@ extension Order {
     }
     
     func address() -> Parent<Order, CustomerAddress> {
-        return parent(id: customer_id)
+        return parent(id: customer_address_id)
     }
     
     func items() -> Children<Order, Subscription> {

@@ -56,8 +56,12 @@ extension StructuredDataWrapper {
     }
 }
 
-
 extension Node {
+    
+    mutating func replace(relation at: String, with relation: Node?) {
+        self["\(at)_id"] = nil
+        self[at] = relation
+    }
     
     mutating func merge(with json: JSON) throws -> Node {
         guard let update = json.node.object else {
