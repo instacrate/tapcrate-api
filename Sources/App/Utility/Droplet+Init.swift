@@ -17,6 +17,7 @@ import MySQLProvider
 import AuthProvider
 import Sessions
 import Cookies
+import Foundation
 
 final class FluentCacheProvider: Vapor.Provider {
     
@@ -94,8 +95,10 @@ extension Droplet {
             }
             
             return drop
+        } catch let error as NSError {
+            fatalError("Failed to start with error \(error.localizedDescription) \(error.userInfo)")
         } catch {
-            fatalError("Failed to start with error \(error) \(type(of: error))")
+            fatalError("Failed to start with error : \(error)")
         }
     }
 }
