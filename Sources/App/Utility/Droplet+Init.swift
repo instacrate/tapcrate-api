@@ -47,17 +47,18 @@ extension Droplet {
         
         do {
             let config = try Config()
-            
+
             try config.addProvider(AuthProvider.Provider.self)
             try config.addProvider(MySQLProvider.Provider.self)
-            
+
             config.addConfigurable(cache: MySQLCache.init, name: "mysql-cache")
-            
+            config.addConfigurable(middleware: CustomErrorMiddleware.init, name: "allError")
+
             try config.addProvider(FluentCacheProvider.self)
         
             config.preparations += [
-                MakerAddress.self,
                 Maker.self,
+                MakerAddress.self,
                 MakerPicture.self,
 
                 Customer.self,
@@ -66,17 +67,20 @@ extension Droplet {
                 StripeMakerCustomer.self,
 
                 Product.self,
+                ProductPlan.self,
                 ProductPicture.self,
+                Variant.self,
+
                 Tag.self,
                 Pivot<Tag, Product>.self,
 
                 Order.self,
-                MySQLCache.MySQLCacheEntity.self,
-                Variant.self,
-                ProductPlan.self,
                 Offer.self,
-                Pivot<Offer, Customer>.self,
                 Subscription.self,
+                MySQLCache.MySQLCacheEntity.self,
+
+                Pivot<Offer, Customer>.self,
+
                 PageView.self,
                 Review.self
             ] as [Preparation.Type]

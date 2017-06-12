@@ -62,6 +62,13 @@ final class Review: Model, Preparation, NodeConvertible, Sanitizable {
     }
 }
 
+extension Review: Protected {
+
+    func owner() throws -> ModelOwner {
+        return .customer(id: customer_id)
+    }
+}
+
 extension Review {
     
     func product() -> Parent<Review, Product> {

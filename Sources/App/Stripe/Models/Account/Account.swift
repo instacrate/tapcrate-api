@@ -135,7 +135,12 @@ extension Sequence where Iterator.Element == (key: String, value: Node) {
         }
         
         var result = Node.object([:])
-        dictionary.forEach { result[$0.components(separatedBy: separator)] = $1 }
+
+        dictionary.forEach { (arg: (key: String, value: Node)) -> () in
+            let (key, value) = arg
+            result[key.components(separatedBy: separator)] = value
+        }
+
         return result
     }
 }

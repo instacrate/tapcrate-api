@@ -13,20 +13,18 @@ import Vapor
 import Foundation
 
 fileprivate func merge(query: [String: NodeRepresentable?], with metadata: [String: NodeRepresentable]) -> [String: NodeRepresentable] {
-    let arguments = metadata.map { ("metadata[\($0)]", $1) }
-    var result: [String: NodeRepresentable] = [:]
-    
-    arguments.forEach {
-        result[$0] = $1
+    var arguments = metadata.map { (arg: (key: String, value: NodeRepresentable)) -> (String, NodeRepresentable) in
+        let (key, value) = arg
+        return ("metadata[\(key)]", value)
     }
-    
-    query.forEach {
-        if ($1 != nil) {
-            result[$0] = $1
-        }
-    }
-    
-    return result
+
+    arguments.append(contentsOf: query.filter { (arg) -> Bool in
+        return arg.value != nil
+    }.map { (arg: ((key: String, value: NodeRepresentable))) -> (String, NodeRepresentable) in
+        return (arg.key, arg.value)
+    })
+
+    return Dictionary(uniqueKeysWithValues: arguments)
 }
 
 public final class Stripe {

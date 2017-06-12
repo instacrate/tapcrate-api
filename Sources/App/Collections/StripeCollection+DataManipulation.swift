@@ -40,10 +40,12 @@ extension StructuredData {
             return nodes.map { $0.collectLeaves(prefix: prefix) }.joined().array
             
         case let .object(object):
-            return object.map { (key: String, value: StructuredData) -> [(String, String)] in
+            return object.map { (arg: (key: String, value: StructuredData)) -> [(String, String)] in
+                let (key, value) = arg
+
                 let prefix = stripeKeyPathFor(base: prefix, appending: key)
                 return value.collectLeaves(prefix: prefix)
-                }.joined().array
+            }.joined().array
             
         case .bool(_), .bytes(_), .string(_), .number(_), .date(_):
             return [(prefix, string ?? "")]

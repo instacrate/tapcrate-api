@@ -144,6 +144,7 @@ final class OrderController: ResourceRepresentable {
     func show(_ request: Request, order: Order) throws -> ResponseRepresentable {
         
         let type: SessionType = try request.extract()
+        try Order.ensure(action: .read, isAllowedOn: order, by: request)
         
         switch type {
         case .customer: fallthrough
@@ -171,24 +172,11 @@ final class OrderController: ResourceRepresentable {
         return try order.makeResponse()
     }
     
-    func delete(_ request: Request, order: Order) throws -> ResponseRepresentable {
-        try order.delete()
-        return Response(status: .noContent)
-    }
-    
-    func modify(_ request: Request, order: Order) throws -> ResponseRepresentable {
-        let order: Order = try request.patchModel(order)
-        try order.save()
-        return try order.makeResponse()
-    }
-    
     func makeResource() -> Resource<Order> {
         return Resource(
             index: index,
             store: create,
-            show: show,
-            update: modify,
-            destroy: delete
+            show: show
         )
     }
 }

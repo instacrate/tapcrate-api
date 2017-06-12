@@ -44,12 +44,19 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
         }
         
         let maker: Maker = try request.extractModel()
+
+        try Maker.ensure(action: .create, isAllowedOn: maker, by: request)
+
+        if try Maker.makeQuery().filter("username", maker.username).count() > 0 {
+            throw Abort.custom(status: .badRequest, message: "Username is taken.")
+        }
+
         try maker.save()
         
-        if var addressNode: Node = try node.extract("address") {
-            addressNode.context = try ParentContext(id: maker.id)
-            let makerAddress = try MakerAddress(node: addressNode)
-            try makerAddress.save()
+        if let node: Node = try node.extract("address") {
+            let context = try ParentContext<Maker>(maker.id)
+            let address = try MakerAddress(sanitizing: node, in: context)
+            try address.save()
         }
         
         return maker
@@ -212,6 +219,13 @@ extension Maker {
     }
 }
 
+extension Maker: Protected {
+
+    func owner() throws -> ModelOwner {
+        return try .maker(id: id())
+    }
+}
+
 extension Maker {
     
     func connectAccount(for customer: Customer, with card: String) throws -> String {
@@ -260,49 +274,5 @@ extension Maker: PasswordAuthenticatable {
     
     public static var passwordVerifier: PasswordVerifier? {
         return BCryptHasher()
-    }
-    
-    public static func authenticate(_ creds: Password) throws -> Maker {
-        guard let match = try self.makeQuery().filter(usernameKey, creds.username).first() else {
-            if drop.config.environment == .development {
-                throw Abort.custom(status: .badRequest, message: "Could not find user with username \(creds.username).")
-            } else {
-                throw AuthenticationError.invalidCredentials
-            }
-        }
-        
-        guard let hash = match.hashedPassword else {
-            if drop.config.environment == .development {
-                throw Abort.custom(status: .badRequest, message: "No hashed password for user with username \(creds.username).")
-            } else {
-                throw AuthenticationError.invalidCredentials
-            }
-        }
-        
-        guard let passwordVerifier = passwordVerifier else {
-            if drop.config.environment == .development {
-                throw Abort.custom(status: .badRequest, message: "No password hasher for \(self).")
-            } else {
-                throw AuthenticationError.invalidCredentials
-            }
-        }
-        
-        do {
-            guard try passwordVerifier.verify(password: creds.password, matches: hash) else {
-                if drop.config.environment == .development {
-                    throw Abort.custom(status: .badRequest, message: "Password \(creds.password) does not match hash : \(hash)")
-                } else {
-                    throw AuthenticationError.invalidCredentials
-                }
-            }
-        } catch {
-            if drop.config.environment == .development {
-                throw Abort.custom(status: .badRequest, message: "Error checking hash : \(error).")
-            } else {
-                throw AuthenticationError.invalidCredentials
-            }
-        }
-        
-        return match
     }
 }

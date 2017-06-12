@@ -11,7 +11,7 @@ import Vapor
 import Fluent
 import FluentProvider
 
-extension Model {
+extension Entity {
     
     func throwableId() throws -> Int {
         guard let id = id else {

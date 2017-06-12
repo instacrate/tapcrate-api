@@ -23,18 +23,25 @@ final class VariantController: ResourceRepresentable {
     
     func create(_ request: Request) throws -> ResponseRepresentable {
         let variant: Variant = try request.extractModel()
+
+        try Variant.ensure(action: .create, isAllowedOn: variant, by: request)
         try variant.save()
+
         return try variant.makeResponse()
     }
     
     func delete(_ request: Request, variant: Variant) throws -> ResponseRepresentable {
+        try Variant.ensure(action: .delete, isAllowedOn: variant, by: request)
         try variant.delete()
         return Response(status: .noContent)
     }
     
     func modify(_ request: Request, variant: Variant) throws -> ResponseRepresentable {
+        try Variant.ensure(action: .create, isAllowedOn: variant, by: request)
+
         let variant: Variant = try request.patchModel(variant)
         try variant.save()
+
         return try variant.makeResponse()
     }
     

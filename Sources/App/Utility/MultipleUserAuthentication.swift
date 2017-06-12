@@ -9,6 +9,8 @@
 import AuthProvider
 import Fluent
 import HTTP
+import Vapor
+import FluentProvider
 
 extension SessionPersistable where Self: Entity {
     
@@ -194,5 +196,18 @@ extension Request {
     
     func maker() throws -> Maker {
         return try multipleUserAuth.assertAuthenticated(Maker.self)
+    }
+
+    func check(has sessionType: SessionType) throws -> Model {
+        switch sessionType {
+        case .customer:
+            return try multipleUserAuth.assertAuthenticated(Customer.self)
+
+        case .maker:
+            return try multipleUserAuth.assertAuthenticated(Maker.self)
+
+        case .anonymous:
+            throw Abort.custom(status: .unauthorized, message: "you can not access this resource")
+        }
     }
 }

@@ -11,18 +11,6 @@ import HTTP
 import Fluent
 import FluentProvider
 
-typealias Pair = (Hashable, Any)
-
-func merge<K: Hashable, V>(keys: [K], with values: [V]) -> [K: V] {
-    var dictionary: [K: V] = [:]
-    
-    zip(keys, values).forEach { key, value in
-        dictionary[key] = value
-    }
-    
-    return dictionary
-}
-
 enum Sort: String, TypesafeOptionsParameter {
 
     case alpha
@@ -48,7 +36,7 @@ enum Sort: String, TypesafeOptionsParameter {
         }
     }
     
-    func modify<T : Entity>(_ query: Query<T>) throws -> Query<T> {
+    func modify<T>(_ query: Query<T>) throws -> Query<T> {
         if self == .none {
             return query
         }
@@ -96,30 +84,35 @@ struct Expander<T: Model & NodeConvertible>: QueryInitializable {
     }
 }
 
-extension Product {
-    
-    func shouldAllow(request: Request) throws {
-        
-        guard let maker = try? request.maker() else {
-            throw try Abort.custom(status: .forbidden, message: "Method \(request.method) is not allowed on resource Product(\(throwableId())) by this user. Must be logged in as Maker(\(maker_id.int ?? 0)).")
-        }
-        
-        guard try maker.throwableId() == maker_id.int else {
-            throw try Abort.custom(status: .forbidden, message: "This Maker(\(maker.throwableId()) does not have access to resource Product(\(throwableId()). Must be logged in as Maker(\(maker_id.int ?? 0).")
-        }
-    }
-}
-
-public struct ParentContext: Context {
+public struct ParentContext<Parent: Entity>: Context {
     
     public let parent_id: Identifier
-    
-    init(id: Identifier?) throws {
-        guard let identifier = id else {
+
+    init(_ parent: Identifier?) throws {
+        guard let identifier = parent else {
             throw Abort.custom(status: .internalServerError, message: "Parent context does not have id")
         }
         
         parent_id = identifier
+    }
+}
+
+public struct SecondaryParentContext<Parent: Entity, Secondary: Entity>: Context {
+
+    public let parent_id: Identifier
+    public let secondary_id: Identifier
+
+    init(_ _parent: Identifier?, _ _secondary: Identifier?) throws {
+        guard let parent = _parent else {
+            throw Abort.custom(status: .internalServerError, message: "Parent context does not have parent id")
+        }
+
+        guard let secondary = _secondary else {
+            throw Abort.custom(status: .internalServerError, message: "Parent context does not have secondary id")
+        }
+
+        self.parent_id = parent
+        self.secondary_id = secondary
     }
 }
 
@@ -136,7 +129,7 @@ final class ProductController: ResourceRepresentable {
             }
             
             return try sort.modify(Product.makeQuery()).all()
-            }()
+        }()
         
         if products.count == 0 {
             return try Node.array([]).makeResponse()
@@ -187,13 +180,15 @@ final class ProductController: ResourceRepresentable {
                 default:
                     throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
                 }
-                }.makeResponse()
+            }.makeResponse()
         }
         
         return try products.makeResponse()
     }
     
     func show(_ request: Request, product: Product) throws -> ResponseRepresentable {
+
+        try Product.ensure(action: .read, isAllowedOn: product, by: request)
         
         if let expander: Expander<Product> = try request.extract() {
             return try expander.expand(for: product, mappings: { (key, products, identifiers) -> [NodeRepresentable] in
@@ -220,10 +215,10 @@ final class ProductController: ResourceRepresentable {
     }
     
     func create(_ request: Request) throws -> ResponseRepresentable {
-        let _ = try request.maker()
         var result: [String : Node] = [:]
         
         let product: Product = try request.extractModel(injecting: request.makerInjectable())
+        try Product.ensure(action: .read, isAllowedOn: product, by: request)
         try product.save()
         
         guard let product_id = product.id else {
@@ -238,7 +233,7 @@ final class ProductController: ResourceRepresentable {
         
         if let pictureNode: [Node] = try? node.extract("pictures") {
             
-            let context = try ParentContext(id: product_id)
+            let context = try ParentContext<Product>(product_id)
             
             let pictures = try pictureNode.map { (object: Node) -> ProductPicture in
                 let picture: ProductPicture = try ProductPicture(node: Node(object.permit(ProductPicture.permitted).wrapped, in: context))
@@ -267,7 +262,7 @@ final class ProductController: ResourceRepresentable {
         
         if let variantNodes: [Node] = try? node.extract("variants") {
             
-            let context = try ParentContext(id: product.id)
+            let context = try SecondaryParentContext<Product, Maker>(product.id, product.maker_id)
             
             let variants = try variantNodes.map { (variantNode: Node) -> Variant in
                 let variant = try Variant(node: Node(variantNode.permit(Variant.permitted).wrapped, in: context))
@@ -282,17 +277,17 @@ final class ProductController: ResourceRepresentable {
     }
     
     func delete(_ request: Request, product: Product) throws -> ResponseRepresentable {
-        try product.shouldAllow(request: request)
-        
+        try Product.ensure(action: .delete, isAllowedOn: product, by: request)
         try product.delete()
         return Response(status: .noContent)
     }
     
     func modify(_ request: Request, product: Product) throws -> ResponseRepresentable {
-        try product.shouldAllow(request: request)
+        try Product.ensure(action: .write, isAllowedOn: product, by: request)
         
         let product: Product = try request.patchModel(product)
         try product.save()
+        
         return try product.makeResponse()
     }
     

@@ -27,12 +27,14 @@ extension AuthenticationCollection {
         
         var newKeyLookup: [String : String] = [:]
         
-        try fetchedKeys.forEach {
-            guard let value = $1.string else {
-                throw NodeError.unableToConvert(input: $1.node, expectation: "\(String.self)", path: [$0])
+        try fetchedKeys.forEach { (arg: (key: String, value: JSON)) -> () in
+            let (key, value) = arg
+
+            guard let string = value.string else {
+                throw NodeError.unableToConvert(input: value.node, expectation: "\(String.self)", path: [key])
             }
             
-            newKeyLookup[$0] = value
+            newKeyLookup[key] = string
         }
         
         keys = newKeyLookup

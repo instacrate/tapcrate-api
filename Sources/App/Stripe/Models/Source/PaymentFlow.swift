@@ -80,7 +80,6 @@ public enum Usage: String, NodeConvertible {
     case singleUse = "single-use"
 }
 
-
 public enum SourceStatus: String, NodeConvertible {
     case pending
     case chargeable

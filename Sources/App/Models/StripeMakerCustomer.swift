@@ -15,8 +15,6 @@ final class StripeMakerCustomer: Model, NodeConvertible, Preparation {
     
     let storage = Storage()
     
-    var exists: Bool = false
-    
     let customer_id: Identifier
     let maker_id: Identifier
     

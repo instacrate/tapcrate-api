@@ -10,19 +10,6 @@ import Vapor
 import HTTP
 import AuthProvider
 
-extension Maker {
-    
-    func shouldAllow(request: Request) throws {
-        guard let maker = try? request.maker() else {
-            throw try Abort.custom(status: .forbidden, message: "Method \(request.method) is not allowed on resource Maker(\(throwableId())) by this user. Must be logged in as Maker(\(throwableId())).")
-        }
-        
-        guard try maker.throwableId() == throwableId() else {
-            throw try Abort.custom(status: .forbidden, message: "This Maker(\(maker.throwableId()) does not have access to resource Maker(\(throwableId()). Must be logged in as Maker(\(throwableId()).")
-        }
-    }
-}
-
 final class MakerController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
@@ -43,18 +30,14 @@ final class MakerController: ResourceRepresentable {
     }
     
     func show(_ request: Request, maker: Maker) throws -> ResponseRepresentable {
-        try maker.shouldAllow(request: request)
+        try Maker.ensure(action: .read, isAllowedOn: maker, by: request)
+
         return try maker.makeResponse()
     }
     
     func create(_ request: Request) throws -> ResponseRepresentable {
         let maker = try Maker.createMaker(from: request)
-        
-        // TODO :
-//        if try Maker.makeQuery().filter("username", maker.username).count() > 0 {
-//            throw Abort.custom(status: .badRequest, message: "Username is taken.")
-//        }
-        
+
         request.multipleUserAuth.authenticate(maker)
         
         let account = try Stripe.shared.createManagedAccount(email: maker.contactEmail, local_id: maker.id?.int)
@@ -67,7 +50,7 @@ final class MakerController: ResourceRepresentable {
     }
     
     func modify(_ request: Request, maker: Maker) throws -> ResponseRepresentable {
-        try maker.shouldAllow(request: request)
+        try Maker.ensure(action: .write, isAllowedOn: maker, by: request)
         
         let maker: Maker = try request.patchModel(maker)
         try maker.save()

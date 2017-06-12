@@ -32,7 +32,7 @@ extension TypesafeOptionsParameter {
         return "Valid values are : [\(Self.values.joined(separator: ", "))]"
     }
     
-    func modify<E : Entity>(_ query: Query<E>) throws -> Query<E> {
+    func modify<E>(_ query: Query<E>) throws -> Query<E> {
         return query
     }
 }

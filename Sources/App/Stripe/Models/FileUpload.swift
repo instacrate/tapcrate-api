@@ -27,7 +27,6 @@ public enum UploadReason: String, NodeConvertible {
         case .incorporation_article: fallthrough
         case .incorporation_document: fallthrough
         case .invoice_statement: fallthrough
-        case .invoice_statement: fallthrough
         case .payment_provider_transfer: fallthrough
         case .product_feed:
             return 8 * 1000000
@@ -43,7 +42,6 @@ public enum UploadReason: String, NodeConvertible {
         case .business_logo: fallthrough
         case .incorporation_article: fallthrough
         case .incorporation_document: fallthrough
-        case .invoice_statement: fallthrough
         case .invoice_statement: fallthrough
         case .payment_provider_transfer: fallthrough
         case .product_feed:

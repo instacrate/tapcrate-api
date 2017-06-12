@@ -26,24 +26,11 @@ final class TagController: ResourceRepresentable {
         return try tag.makeResponse()
     }
     
-    func delete(_ request: Request, tag: Tag) throws -> ResponseRepresentable {
-        try tag.delete()
-        return Response(status: .noContent)
-    }
-    
-    func modify(_ request: Request, tag: Tag) throws -> ResponseRepresentable {
-        let tag: Tag = try request.patchModel(tag)
-        try tag.save()
-        return try tag.makeResponse()
-    }
-    
     func makeResource() -> Resource<Tag> {
         return Resource(
             index: index,
             store: create,
-            show: show,
-            update: modify,
-            destroy: delete
+            show: show
         )
     }
 }

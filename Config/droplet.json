@@ -9,6 +9,6 @@
     "middleware" : [
         "file",
         "fluent-sessions",
-        "error"
+        "allError"
     ]
 }

@@ -177,24 +177,23 @@ class StripeCollection: EmptyInitializable {
                     
                     var updates: [String : String] = [:]
                     
-                    try object.forEach {
-                        guard let string = $1.string else {
-                            throw Abort.custom(status: .badRequest, message: "could not convert object at key \($0) to string.")
+                    try object.forEach { (arg: (key: String, value: Node)) -> () in
+                        let (key, value) = arg
+
+                        guard let string = value.string else {
+                            throw Abort.custom(status: .badRequest, message: "could not convert object at key \(key) to string.")
                         }
-                        
-                        var split = $0.components(separatedBy: ".")
-                        
+
+                        var formattedKey: String
+                        let split = key.components(separatedBy: ".")
+
                         if split.count == 1 {
-                            updates[$0] = string
-                            return
+                            formattedKey = split[0]
+                        } else {
+                            formattedKey = split[1..<split.count].reduce(split[0]) { $0 + "[\($1)]" }
                         }
-                        
-                        var key = split[0]
-                        split.remove(at: 0)
-                        
-                        key = key + split.reduce("") { $0 + "[\($1)]" }
-                        
-                        updates[key] = string
+
+                        updates[formattedKey] = string
                     }
                     
                     return try Stripe.shared.updateAccount(id: stripe_id, parameters: updates).makeResponse()

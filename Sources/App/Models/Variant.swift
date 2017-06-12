@@ -15,22 +15,35 @@ final class Variant: Model, Preparation, NodeConvertible, Sanitizable {
     
     let storage = Storage()
     
-    static var permitted: [String] = ["name", "product_id", "options"]
+    static var permitted: [String] = ["name", "product_id", "options", "maker_id"]
     
     let name: String
     let options: [String]
-    var product_id: Identifier
+
+    let product_id: Identifier
+    let maker_id: Identifier
     
     init(node: Node) throws {
         name = try node.extract("name")
+        options = try node.extract("options")
         
-        if let parent = node.context as? ParentContext {
+        if let parent = node.context as? SecondaryParentContext<Product, Maker> {
             product_id = parent.parent_id
+            maker_id = parent.secondary_id
         } else {
             product_id = try node.extract("product_id")
+
+            if let maker_id: Identifier = try? node.extract("maker_id") {
+                self.maker_id = maker_id
+            } else {
+                guard let maker_id = try Product.find(product_id)?.maker_id else {
+                    throw Abort.custom(status: .badRequest, message: "Could not find product linked from variant.")
+                }
+
+                self.maker_id = maker_id
+            }
         }
-        
-        options = try node.extract("options")
+
         id = try? node.extract("id")
     }
     
@@ -48,7 +61,8 @@ final class Variant: Model, Preparation, NodeConvertible, Sanitizable {
         return try Node(node: [
             "name" : name,
             "options" : options,
-            "product_id" : product_id
+            "product_id" : product_id,
+            "maker_id" : maker_id
         ]).add(objects: [
             "id" : id
         ])
@@ -59,12 +73,20 @@ final class Variant: Model, Preparation, NodeConvertible, Sanitizable {
             variant.id()
             variant.string("name")
             variant.string("options")
+            variant.parent(Maker.self)
             variant.parent(Product.self)
         }
     }
     
     static func revert(_ database: Database) throws {
         try database.delete(Variant.self)
+    }
+}
+
+extension Variant: Protected  {
+
+    func owner() throws -> ModelOwner {
+        return .maker(id: maker_id)
     }
 }
 

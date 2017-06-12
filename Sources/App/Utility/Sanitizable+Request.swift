@@ -10,13 +10,24 @@ extension StructuredDataWrapper {
             return self
         }
 
-        object.forEach { key, _ in
+        object.forEach { (arg) in
+            let (key, _) = arg
+
             if !keys.contains(key) {
                 object[key] = nil
             }
         }
 
         return Self(object, in: jsonContext)
+    }
+}
+
+extension Sanitizable where Self: NodeInitializable {
+
+    init(sanitizing node: Node, in context: Context = emptyContext) throws {
+        var sanitized = node.permit(Self.permitted)
+        sanitized.context = context
+        try self.init(node: sanitized)
     }
 }
 
@@ -29,7 +40,8 @@ extension Request {
     public func extractModel<M: Model>(injecting: Node) throws -> M where M: Sanitizable & NodeConvertible {
         var json = try self.json().permit(M.permitted)
 
-        injecting.object?.forEach { key, value in
+        injecting.object?.forEach { (arg) in
+            let (key, value) = arg
             json[key] = JSON(value)
         }
 

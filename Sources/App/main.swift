@@ -33,15 +33,15 @@ drop.group(middleware: persist) { persistable in
     AuthenticationCollection().build(persistable)
     
     persistable.resource("makers", MakerController())
-    persistable.picture(base: "makers", slug: "makers_id", picture: PictureController<MakerPicture, Maker>())
+    persistable.nested(base: "makers", controller: PictureController<Maker, MakerPicture>())
     persistable.resource("makerAddresses", MakerAddressController())
     
     persistable.resource("customers", CustomerController())
-    persistable.picture(base: "customers", slug: "customer_id", picture: PictureController<CustomerPicture, Customer>())
+    persistable.nested(base: "customers", controller: PictureController<Customer, CustomerPicture>())
     persistable.resource("customerAddresses", CustomerShippingController())
     
     persistable.resource("products", ProductController())
-    persistable.picture(base: "products", slug: "products_id", picture: PictureController<ProductPicture, Product>())
+    persistable.nested(base: "products", controller: PictureController<Product, ProductPicture>())
     
     persistable.resource("reviews", ReviewController())
     

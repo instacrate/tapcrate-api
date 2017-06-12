@@ -9,19 +9,6 @@
 import Vapor
 import HTTP
 
-extension MakerAddress {
-    
-    func shouldAllow(request: Request) throws {
-        guard let maker = try? request.maker() else {
-            throw try Abort.custom(status: .forbidden, message: "Method \(request.method) is not allowed on resource MakerAddress(\(throwableId())) by this maker. Must be logged in as Maker(\(maker_id.int ?? 0)).")
-        }
-        
-        guard maker.id?.int == maker_id.int else {
-            throw try Abort.custom(status: .forbidden, message: "This Maker(\(maker.throwableId())) does not have access to resource MakerAddress(\(throwableId()). Must be logged in as Maker(\(maker_id.int ?? 0).")
-        }
-    }
-}
-
 final class MakerAddressController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
@@ -31,20 +18,23 @@ final class MakerAddressController: ResourceRepresentable {
     
     func create(_ request: Request) throws -> ResponseRepresentable {
         let address: MakerAddress = try request.extractModel(injecting: request.makerInjectable())
+
+        try Maker.ensure(action: .create, isAllowedOn: address, by: request)
         try address.save()
         
         return try address.makeResponse()
     }
     
     func delete(_ request: Request, address: MakerAddress) throws -> ResponseRepresentable {
-        try address.shouldAllow(request: request)
+        try Maker.ensure(action: .delete, isAllowedOn: address, by: request)
+
         try address.delete()
         
         return Response(status: .noContent)
     }
     
     func modify(_ request: Request, address: MakerAddress) throws -> ResponseRepresentable {
-        try address.shouldAllow(request: request)
+        try Maker.ensure(action: .read, isAllowedOn: address, by: request)
         
         let updated: MakerAddress = try request.patchModel(address)
         try updated.save()

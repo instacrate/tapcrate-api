@@ -21,19 +21,12 @@ enum FetchType: String, TypesafeOptionsParameter {
     static var defaultValue: FetchType? = nil
 }
 
-extension Customer {
-    
-    func shouldAllow(request: Request) throws {
-        guard try self.throwableId() == request.customer().throwableId() else {
-            throw AuthenticationError.notAuthenticated
-        }
-    }
-}
-
 final class CustomerController {
     
     func detail(_ request: Request) throws -> ResponseRepresentable {
         let customer = try request.customer()
+
+        try Customer.ensure(action: .read, isAllowedOn: customer, by: request)
         
         if let expander: Expander<Customer> = try request.extract() {
             return try expander.expand(for: customer, mappings: { (key, customers, identifier) -> [NodeRepresentable] in
@@ -59,6 +52,8 @@ final class CustomerController {
     
     func create(_ request: Request) throws -> ResponseRepresentable {
         let customer: Customer = try request.extractModel()
+
+        try Customer.ensure(action: .create, isAllowedOn: customer, by: request)
         
         if try Customer.makeQuery().filter("email", customer.email).count() > 0 {
             throw Abort.custom(status: .badRequest, message: "Username is taken.")
@@ -71,7 +66,7 @@ final class CustomerController {
     }
     
     func modify(_ request: Request, customer: Customer) throws -> ResponseRepresentable {
-        try customer.shouldAllow(request: request)
+        try Customer.ensure(action: .read, isAllowedOn: customer, by: request)
         
         let customer: Customer = try request.patchModel(customer)
         try customer.save()

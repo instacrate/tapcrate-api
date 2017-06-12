@@ -62,11 +62,11 @@ final class Customer: Model, Preparation, NodeConvertible, Sanitizable, JWTIniti
         return try Node(node: [
             "name" : .string(name),
             "email" : .string(email)
-            ]).add(objects: [
-                "id" : id,
-                "stripe_id" : stripe_id,
-                "sub_id" : sub_id
-                ])
+        ]).add(objects: [
+            "id" : id,
+            "stripe_id" : stripe_id,
+            "sub_id" : sub_id
+        ])
     }
     
     static func prepare(_ database: Database) throws {
@@ -96,6 +96,13 @@ extension Customer {
 
     func orders() -> Children<Customer, Order> {
         return children()
+    }
+}
+
+extension Customer: Protected {
+
+    func owner() throws -> ModelOwner {
+        return try .customer(id: id())
     }
 }
 

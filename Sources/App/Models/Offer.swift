@@ -29,7 +29,8 @@ final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
     let expiration: Date
     let code: String
 
-    var product_id: Identifier
+    let product_id: Identifier
+    let maker_id: Identifier
     
     init(node: Node) throws {
         type = try node.extract("type")
@@ -37,13 +38,15 @@ final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
         line_2 = try node.extract("line_2")
         expiration = try node.extract("expiration")
         code = try node.extract("code")
-        
-        if let context: ParentContext = node.context as? ParentContext {
+
+        if let context = node.context as? SecondaryParentContext<Product, Maker> {
             product_id = context.parent_id
+            maker_id = context.secondary_id
         } else {
             product_id = try node.extract("product_id")
+            maker_id = try node.extract("maker_id")
         }
-        
+
         id = try? node.extract("id")
     }
     
@@ -53,10 +56,11 @@ final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
             "line_1" : .string(line_1),
             "line_2" : .string(line_2),
             "expiration" : try expiration.makeNode(in: emptyContext),
-            "code" : .string(code)
+            "code" : .string(code),
+            "product_id" : product_id.converted(to: Node.self),
+            "maker_id" : maker_id.converted(to: Node.self)
         ]).add(objects: [
-            "id" : id,
-            "product_id" : product_id
+            "id" : id
         ])
     }
     
@@ -69,10 +73,29 @@ final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
             offer.string("expiration")
             offer.string("code")
             offer.parent(Product.self)
+            offer.parent(Maker.self)
         }
     }
     
     static func revert(_ database: Database) throws {
         try database.delete(Offer.self)
+    }
+}
+
+extension Offer {
+
+    func product() -> Parent<Offer, Product> {
+        return parent(id: product_id)
+    }
+
+    func maker() -> Parent<Offer, Maker> {
+        return parent(id: maker_id)
+    }
+}
+
+extension Offer: Protected {
+
+    func owner() throws -> ModelOwner {
+        return .maker(id: maker_id)
     }
 }

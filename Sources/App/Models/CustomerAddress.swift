@@ -80,6 +80,13 @@ final class CustomerAddress: Model, Preparation, NodeConvertible, Sanitizable {
     }
 }
 
+extension CustomerAddress: Protected {
+
+    func owner() throws -> ModelOwner {
+        return try .customer(id: customer_id)
+    }
+}
+
 extension CustomerAddress {
     
     func customer() -> Parent<CustomerAddress, Customer> {

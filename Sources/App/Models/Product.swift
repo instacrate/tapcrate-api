@@ -16,9 +16,6 @@ final class Product: Model, Preparation, NodeConvertible, Sanitizable {
     
     static var permitted: [String] = ["name", "fullPrice", "shortDescription", "longDescription", "maker_id", "created"]
     
-    var id: Identifier?
-    var exists = false
-    
     let name: String
     let fullPrice: Double
     let shortDescription: String
@@ -28,15 +25,14 @@ final class Product: Model, Preparation, NodeConvertible, Sanitizable {
     let maker_id: Identifier
     
     init(node: Node) throws {
-        id = try? node.extract("id")
-        
         name = try node.extract("name")
         fullPrice = try node.extract("fullPrice")
         shortDescription = try node.extract("shortDescription")
         longDescription = try node.extract("longDescription")
         created = (try? node.extract("created")) ?? Date()
-        
         maker_id = try node.extract("maker_id")
+
+        id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {
@@ -120,5 +116,12 @@ extension Product {
             
             return boxPlan.plan_id
         }
+    }
+}
+
+extension Product: Protected {
+
+    func owner() throws -> ModelOwner {
+        return .maker(id: maker_id)
     }
 }

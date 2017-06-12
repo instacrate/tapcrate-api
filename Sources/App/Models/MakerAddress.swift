@@ -32,7 +32,7 @@ final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
         state = try node.extract("state")
         zip = try node.extract("zip")
         
-        if let parent = node.context as? ParentContext {
+        if let parent = node.context as? ParentContext<Maker> {
             maker_id = parent.parent_id
         } else {
             maker_id = try node.extract("maker_id")
@@ -70,5 +70,12 @@ final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
     
     static func revert(_ database: Database) throws {
         try database.delete(MakerAddress.self)
+    }
+}
+
+extension MakerAddress: Protected {
+
+    func owner() throws -> ModelOwner {
+        return .maker(id: maker_id)
     }
 }
