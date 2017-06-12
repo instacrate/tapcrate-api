@@ -20,5 +20,5 @@ cd "$DIR" || exit
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
 	./.build/release/App --env="production" & echo $! > "$pidFile"
 else
-	./.build/release/App --env="development" & echo $! > "$pidFile"
+	./.build/debug/App --env="development" & echo $! > "$pidFile"
 fi
