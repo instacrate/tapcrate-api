@@ -68,6 +68,9 @@ if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
 
 	echo "\n>>>> sudo systemctl restart tapcrated.service"
 	sudo systemctl restart tapcrated.service
+
+	echo "\n>>>> sudo systemctl status tapcrated.service"
+	sudo systemctl status tapcrated.service
 else
 	echo "\n>>>> vapor build --release=false --fetch=false --verbose"
 	vapor build --release=false --fetch=false --verbose
@@ -79,6 +82,9 @@ else
 
 	echo "\n>>>> sudo systemctl restart dev-tapcrated.service"
 	sudo systemctl restart dev-tapcrated.service
+
+	echo "\n>>>> sudo systemctl status dev-tapcrated.service"
+	sudo systemctl status dev-tapcrated.service
 fi
 
 
