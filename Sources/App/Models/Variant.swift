@@ -11,7 +11,7 @@ import Fluent
 import FluentProvider
 import Node
 
-final class Variant: Model, Preparation, NodeConvertible, Sanitizable {
+final class Variant: BaseModel {
     
     let storage = Storage()
     
@@ -64,7 +64,9 @@ final class Variant: Model, Preparation, NodeConvertible, Sanitizable {
             "product_id" : product_id,
             "maker_id" : maker_id
         ]).add(objects: [
-            "id" : id
+            "id" : id,
+            Variant.createdAtKey : createdAt,
+            Variant.updatedAtKey : updatedAt
         ])
     }
     

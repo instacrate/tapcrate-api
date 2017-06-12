@@ -10,17 +10,16 @@ import Vapor
 import Fluent
 import FluentProvider
 
-final class Product: Model, Preparation, NodeConvertible, Sanitizable {
+final class Product: BaseModel {
     
     let storage = Storage()
     
-    static var permitted: [String] = ["name", "fullPrice", "shortDescription", "longDescription", "maker_id", "created"]
+    static var permitted: [String] = ["name", "fullPrice", "shortDescription", "longDescription", "maker_id"]
     
     let name: String
     let fullPrice: Double
     let shortDescription: String
     let longDescription: String
-    let created: Date
     
     let maker_id: Identifier
     
@@ -29,7 +28,6 @@ final class Product: Model, Preparation, NodeConvertible, Sanitizable {
         fullPrice = try node.extract("fullPrice")
         shortDescription = try node.extract("shortDescription")
         longDescription = try node.extract("longDescription")
-        created = (try? node.extract("created")) ?? Date()
         maker_id = try node.extract("maker_id")
 
         id = try? node.extract("id")
@@ -40,11 +38,12 @@ final class Product: Model, Preparation, NodeConvertible, Sanitizable {
             "name" : .string(name),
             "fullPrice" : .number(.double(fullPrice)),
             "shortDescription" : .string(shortDescription),
-            "longDescription" : .string(longDescription),
-            "created" : .date(created)
+            "longDescription" : .string(longDescription)
         ]).add(objects: [
             "id" : id,
-            "maker_id" : maker_id
+            "maker_id" : maker_id,
+            Product.createdAtKey : createdAt,
+            Product.updatedAtKey : updatedAt
         ])
     }
     
@@ -55,7 +54,6 @@ final class Product: Model, Preparation, NodeConvertible, Sanitizable {
             product.double("fullPrice")
             product.string("shortDescription")
             product.string("longDescription")
-            product.string("created")
             product.parent(Maker.self)
         }
     }

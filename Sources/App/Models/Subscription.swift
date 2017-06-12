@@ -10,7 +10,7 @@ import Fluent
 import FluentProvider
 import Node
 
-final class Subscription: Model, Preparation, NodeConvertible, Sanitizable {
+final class Subscription: BaseModel {
     
     var storage = Storage()
     
@@ -84,7 +84,9 @@ final class Subscription: Model, Preparation, NodeConvertible, Sanitizable {
             "id" : id,
             "subcriptionIdentifier" : subcriptionIdentifier,
             "variants" : variants,
-            "offer_id" : offer_id
+            "offer_id" : offer_id,
+            Subscription.createdAtKey : createdAt,
+            Subscription.updatedAtKey : updatedAt
         ])
     }
     

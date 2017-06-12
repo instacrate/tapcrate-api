@@ -11,7 +11,7 @@ import Fluent
 import FluentProvider
 import Node
 
-final class StripeMakerCustomer: Model, NodeConvertible, Preparation {
+final class StripeMakerCustomer: BaseInternalModel {
     
     let storage = Storage()
     
@@ -48,7 +48,9 @@ final class StripeMakerCustomer: Model, NodeConvertible, Preparation {
             "customer_id" : customer_id.makeNode(in: context),
             "maker_id" : maker_id.makeNode(in: context)
         ]).add(objects: [
-            "id" : id
+            "id" : id,
+            StripeMakerCustomer.createdAtKey : createdAt,
+            StripeMakerCustomer.updatedAtKey : updatedAt
         ])
     }
     

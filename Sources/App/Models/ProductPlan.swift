@@ -11,7 +11,7 @@ import Fluent
 import FluentProvider
 import Node
 
-final class ProductPlan: Model, Preparation, NodeConvertible {
+final class ProductPlan: BaseInternalModel {
     
     let storage = Storage()
     
@@ -39,7 +39,9 @@ final class ProductPlan: Model, Preparation, NodeConvertible {
             "maker_id" : maker_id
         ]).add(objects: [
             "id" : id,
-            "product_id" : product_id
+            "product_id" : product_id,
+            ProductPlan.createdAtKey : createdAt,
+            ProductPlan.updatedAtKey : updatedAt
         ])
     }
     

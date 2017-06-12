@@ -36,7 +36,7 @@ enum ApplicationState: String, NodeConvertible {
     }
 }
 
-final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitializable, SessionPersistable {
+final class Maker: BaseModel, JWTInitializable, SessionPersistable {
     
     static func createMaker(from request: Request) throws -> Maker {
         guard let node = request.json?.node else {
@@ -64,7 +64,7 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
     
     let storage = Storage()
     
-    static var permitted: [String] = ["email", "businessName", "publicWebsite", "contactName", "contactPhone", "contactEmail", "location", "createdOn", "cut", "username", "stripe_id", "keys", "missingFields", "needsIdentityUpload", "maker_address_id", "password"]
+    static var permitted: [String] = ["email", "businessName", "publicWebsite", "contactName", "contactPhone", "contactEmail", "location", "cut", "username", "stripe_id", "keys", "missingFields", "needsIdentityUpload", "maker_address_id", "password"]
     
     let email: String
     let businessName: String
@@ -75,7 +75,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
     let contactEmail: String
     
     let location: String
-    let createdOn: Date
     let cut: Double
     
     var username: String
@@ -114,7 +113,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
         contactEmail = try node.extract("contactEmail")
         
         location = try node.extract("location")
-        createdOn = (try? node.extract("createdOn")) ?? Date()
         cut = try node.extract("cut") ?? 0.08
         sub_id = try? node.extract("sub_id")
         
@@ -157,8 +155,9 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
             "publishableKey" : keys?.publishable,
             "secretKey" : keys?.secret,
             "sub_id" : sub_id,
-            "createdOn" : Node.date(createdOn).string,
-            "password" : (context?.isRow ?? false) ? password : nil
+            "password" : (context?.isRow ?? false) ? password : nil,
+            Maker.createdAtKey : createdAt,
+            Maker.updatedAtKey : updatedAt
         ])
     }
     
@@ -174,7 +173,6 @@ final class Maker: Model, Preparation, NodeConvertible, Sanitizable, JWTInitiali
             maker.string("contactEmail")
             
             maker.string("location")
-            maker.string("createdOn")
             maker.double("cut")
             
             maker.string("username")

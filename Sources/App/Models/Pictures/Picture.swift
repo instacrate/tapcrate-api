@@ -8,7 +8,7 @@
 import Vapor
 import FluentProvider
 
-protocol PictureBase: Model, NodeConvertible, Sanitizable, Preparation, Protected {
+protocol PictureBase: BaseModel, Protected {
 
     static func pictures(for owner: Identifier) throws -> Query<Self>
 }

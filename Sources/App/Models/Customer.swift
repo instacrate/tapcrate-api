@@ -25,7 +25,7 @@ extension Stripe {
     }
 }
 
-final class Customer: Model, Preparation, NodeConvertible, Sanitizable, JWTInitializable, SessionPersistable {
+final class Customer: BaseModel, JWTInitializable, SessionPersistable {
     
     static var permitted: [String] = ["email", "name", "default_shipping_id"]
     
@@ -65,7 +65,9 @@ final class Customer: Model, Preparation, NodeConvertible, Sanitizable, JWTIniti
         ]).add(objects: [
             "id" : id,
             "stripe_id" : stripe_id,
-            "sub_id" : sub_id
+            "sub_id" : sub_id,
+            Customer.createdAtKey : createdAt,
+            Customer.updatedAtKey : updatedAt
         ])
     }
     

@@ -38,7 +38,9 @@ final class MakerPicture: PictureBase {
             "url" : .string(url)
         ]).add(objects: [
             "id" : id,
-            "maker_id" : maker_id
+            "maker_id" : maker_id,
+            MakerPicture.createdAtKey : createdAt,
+            MakerPicture.updatedAtKey : updatedAt
         ])
     }
 

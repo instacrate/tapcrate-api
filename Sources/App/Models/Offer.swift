@@ -17,7 +17,7 @@ enum OfferType: String, NodeConvertible {
     case deal
 }
 
-final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
+final class Offer: BaseModel {
 
     let storage = Storage()
     
@@ -60,7 +60,9 @@ final class Offer: Model, Preparation, NodeConvertible, Sanitizable {
             "product_id" : product_id.converted(to: Node.self),
             "maker_id" : maker_id.converted(to: Node.self)
         ]).add(objects: [
-            "id" : id
+            "id" : id,
+            Offer.createdAtKey : createdAt,
+            Customer.updatedAtKey : updatedAt
         ])
     }
     

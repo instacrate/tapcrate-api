@@ -11,7 +11,7 @@ import Fluent
 import FluentProvider
 import Node
 
-final class CustomerAddress: Model, Preparation, NodeConvertible, Sanitizable {
+final class CustomerAddress: BaseModel {
     
     static var permitted: [String] = ["customer_id", "address", "firstName", "lastName", "apartment", "city", "state", "zip", "isDefault", "phoneNumber"]
     
@@ -56,7 +56,9 @@ final class CustomerAddress: Model, Preparation, NodeConvertible, Sanitizable {
             "id" : id,
             "apartment" : apartment,
             "phoneNumber" : phoneNumber,
-            "customer_id" : customer_id
+            "customer_id" : customer_id,
+            CustomerAddress.createdAtKey : createdAt,
+            CustomerAddress.updatedAtKey : updatedAt
         ])
     }
     

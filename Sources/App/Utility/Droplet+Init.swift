@@ -82,7 +82,9 @@ extension Droplet {
                 Pivot<Offer, Customer>.self,
 
                 PageView.self,
-                Review.self
+                Review.self,
+
+                AddTimestampableToAllEntities.self
             ] as [Preparation.Type]
 
             let drop = try Droplet(config)

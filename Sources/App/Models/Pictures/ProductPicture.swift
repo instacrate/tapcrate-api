@@ -54,7 +54,9 @@ final class ProductPicture: PictureBase {
             "type" : .number(.int(type))
         ]).add(objects: [
             "id" : id,
-            "product_id" : product_id
+            "product_id" : product_id,
+            ProductPicture.createdAtKey : createdAt,
+            ProductPicture.updatedAtKey : updatedAt
         ])
     }
 

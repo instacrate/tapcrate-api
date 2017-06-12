@@ -63,8 +63,6 @@ drop.group(middleware: persist) { persistable in
     }
 }
 
-print(drop.router.routes)
-
 do {
     try drop.run()
 } catch {

@@ -11,7 +11,7 @@ import Fluent
 import FluentProvider
 import Node
 
-final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
+final class MakerAddress: BaseModel {
     
     let storage = Storage()
     
@@ -52,7 +52,9 @@ final class MakerAddress: Model, Preparation, NodeConvertible, Sanitizable {
             "maker_id" : maker_id
         ]).add(objects: [
             "id" : id,
-            "apartment" : apartment
+            "apartment" : apartment,
+            MakerAddress.createdAtKey : createdAt,
+            MakerAddress.updatedAtKey : updatedAt
         ])
     }
     

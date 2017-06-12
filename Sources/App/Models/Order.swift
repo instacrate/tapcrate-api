@@ -36,7 +36,7 @@ extension Order {
     }
 }
 
-final class Order: Model, Preparation, NodeConvertible, Sanitizable {
+final class Order: BaseModel {
 
     var storage = Storage()
     
@@ -60,7 +60,9 @@ final class Order: Model, Preparation, NodeConvertible, Sanitizable {
         ]).add(objects: [
             "id" : id,
             "customer_id" : customer_id,
-            "customer_address_id" : customer_address_id
+            "customer_address_id" : customer_address_id,
+            Offer.createdAtKey : createdAt,
+            Offer.updatedAtKey : updatedAt
         ])
     }
     

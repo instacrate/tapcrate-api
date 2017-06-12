@@ -11,15 +11,14 @@ import Fluent
 import FluentProvider
 import Node
 
-final class Review: Model, Preparation, NodeConvertible, Sanitizable {
+final class Review: BaseModel {
     
     let storage = Storage()
     
-    static var permitted: [String] = ["text", "rating", "product_id", "customer_id", "date"]
+    static var permitted: [String] = ["text", "rating", "product_id", "customer_id"]
     
     let text: String
     let rating: Int
-    let date: Date
     
     var product_id: Identifier
     var customer_id: Identifier
@@ -30,8 +29,6 @@ final class Review: Model, Preparation, NodeConvertible, Sanitizable {
         
         product_id = try node.extract("product_id")
         customer_id = try node.extract("customer_id")
-
-        date = (try? node.extract("date")) ?? Date()
         
         id = try? node.extract("id")
     }
@@ -40,10 +37,13 @@ final class Review: Model, Preparation, NodeConvertible, Sanitizable {
         return try Node(node: [
             "text" : .string(text),
             "rating" : .number(.int(rating)),
-            "date" : date.makeNode(in: context),
             "product_id" : product_id.makeNode(in: context),
             "customer_id" : customer_id.makeNode(in: context)
-        ]).add(name: "id", node: id.makeNode(in: context))
+        ]).add(objects: [
+            "id" : id,
+            Review.createdAtKey : createdAt,
+            Review.updatedAtKey : updatedAt
+        ])
     }
     
     static func prepare(_ database: Database) throws {
@@ -51,7 +51,6 @@ final class Review: Model, Preparation, NodeConvertible, Sanitizable {
             review.id()
             review.string("text")
             review.string("rating")
-            review.string("date")
             review.parent(Product.self)
             review.parent(Customer.self)
         })

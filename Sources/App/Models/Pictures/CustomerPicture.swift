@@ -36,10 +36,12 @@ final class CustomerPicture: PictureBase {
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "url" : .string(url)
-            ]).add(objects: [
-                "id" : id,
-                "customer_id" : customer_id
-                ])
+        ]).add(objects: [
+            "id" : id,
+            "customer_id" : customer_id,
+            CustomerPicture.createdAtKey : createdAt,
+            CustomerPicture.updatedAtKey : updatedAt
+        ])
     }
 
     class func prepare(_ database: Database) throws {

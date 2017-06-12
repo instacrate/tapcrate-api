@@ -11,7 +11,7 @@ import Fluent
 import FluentProvider
 import Node
 
-final class PageView: Model, Preparation, NodeConvertible, Sanitizable {
+final class PageView: BaseModel {
     
     let storage = Storage()
     
@@ -36,7 +36,9 @@ final class PageView: Model, Preparation, NodeConvertible, Sanitizable {
             "product_id" : product_id
         ]).add(objects: [
             "id" : id,
-            "customer_id" : customer_id
+            "customer_id" : customer_id,
+            PageView.createdAtKey : createdAt,
+            PageView.updatedAtKey : updatedAt
         ])
     }
     

@@ -11,7 +11,7 @@ import Fluent
 import FluentProvider
 import Node
 
-final class Tag: Model, Preparation, NodeConvertible, Sanitizable {
+final class Tag: BaseModel {
     
     let storage = Storage()
     
@@ -29,7 +29,9 @@ final class Tag: Model, Preparation, NodeConvertible, Sanitizable {
         return try Node(node: [
             "name" : name
         ]).add(objects: [
-            "id" : id
+            "id" : id,
+            Tag.createdAtKey : createdAt,
+            Tag.updatedAtKey : updatedAt
         ])
     }
     
