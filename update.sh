@@ -52,7 +52,7 @@ if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- nginx/)" ]; then
 	fi
 fi
 
-if [ "$(git diff --name-only $CURRENT_GIT_SHA -- Package.pins)" ]; then
+if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- ./Package.pins)" ]; then
 	echo "\n>>>> vapor fetch --verbose"
 	vapor fetch --verbose
 fi
