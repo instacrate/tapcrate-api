@@ -16,59 +16,59 @@ struct AddTimestampableToAllEntities: Preparation {
     static func prepare(_ database: Database) throws {
 
         try? database.modify(Customer.self) { builder in
-            builder.date(Customer.createdAtKey)
-            builder.date(Customer.updatedAtKey)
+            builder.date(Customer.createdAtKey, default: Date())
+            builder.date(Customer.updatedAtKey, default: Date())
         }
         try? database.modify(CustomerAddress.self) { builder in
-            builder.date(CustomerAddress.createdAtKey)
-            builder.date(CustomerAddress.updatedAtKey)
+            builder.date(CustomerAddress.createdAtKey, default: Date())
+            builder.date(CustomerAddress.updatedAtKey, default: Date())
         }
         try? database.modify(Maker.self) { builder in
             builder.delete("createdOn")
-            builder.date(Maker.createdAtKey)
-            builder.date(Maker.updatedAtKey)
+            builder.date(Maker.createdAtKey, default: Date())
+            builder.date(Maker.updatedAtKey, default: Date())
         }
         try? database.modify(Offer.self) { builder in
-            builder.date(Offer.createdAtKey)
-            builder.date(Offer.updatedAtKey)
+            builder.date(Offer.createdAtKey, default: Date())
+            builder.date(Offer.updatedAtKey, default: Date())
         }
         try? database.modify(PageView.self) { builder in
-            builder.date(PageView.createdAtKey)
-            builder.date(PageView.updatedAtKey)
+            builder.date(PageView.createdAtKey, default: Date())
+            builder.date(PageView.updatedAtKey, default: Date())
         }
         try? database.modify(CustomerPicture.self) { builder in
-            builder.date(CustomerPicture.createdAtKey)
-            builder.date(CustomerPicture.updatedAtKey)
+            builder.date(CustomerPicture.createdAtKey, default: Date())
+            builder.date(CustomerPicture.updatedAtKey, default: Date())
         }
         try? database.modify(MakerPicture.self) { builder in
-            builder.date(MakerPicture.createdAtKey)
-            builder.date(MakerPicture.updatedAtKey)
+            builder.date(MakerPicture.createdAtKey, default: Date())
+            builder.date(MakerPicture.updatedAtKey, default: Date())
         }
         try? database.modify(ProductPicture.self) { builder in
-            builder.date(ProductPicture.createdAtKey)
-            builder.date(ProductPicture.updatedAtKey)
+            builder.date(ProductPicture.createdAtKey, default: Date())
+            builder.date(ProductPicture.updatedAtKey, default: Date())
         }
         try? database.modify(Product.self) { builder in
             builder.delete("created")
-            builder.date(Product.createdAtKey)
-            builder.date(Product.updatedAtKey)
+            builder.date(Product.createdAtKey, default: Date())
+            builder.date(Product.updatedAtKey, default: Date())
         }
         try? database.modify(Review.self) { builder in
             builder.delete("date")
-            builder.date(Review.createdAtKey)
-            builder.date(Review.updatedAtKey)
+            builder.date(Review.createdAtKey, default: Date())
+            builder.date(Review.updatedAtKey, default: Date())
         }
         try? database.modify(Subscription.self) { builder in
-            builder.date(Subscription.createdAtKey)
-            builder.date(Subscription.updatedAtKey)
+            builder.date(Subscription.createdAtKey, default: Date())
+            builder.date(Subscription.updatedAtKey, default: Date())
         }
         try? database.modify(Tag.self) { builder in
-            builder.date(Tag.createdAtKey)
-            builder.date(Tag.updatedAtKey)
+            builder.date(Tag.createdAtKey, default: Date())
+            builder.date(Tag.updatedAtKey, default: Date())
         }
         try? database.modify(Variant.self) { builder in
-            builder.date(Variant.createdAtKey)
-            builder.date(Variant.updatedAtKey)
+            builder.date(Variant.createdAtKey, default: Date())
+            builder.date(Variant.updatedAtKey, default: Date())
         }
     }
 }
