@@ -95,7 +95,7 @@ extension Droplet {
             
             return drop
         } catch {
-            fatalError("Failed to start with error \(error)")
+            fatalError("Failed to start with error \(error) \(type(of: error))")
         }
     }
 }
