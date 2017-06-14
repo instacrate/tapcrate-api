@@ -9,6 +9,9 @@ import Vapor
 import Fluent
 import FluentProvider
 import Node
+import Foundation
+
+import FluentProvider
 
 final class Subscription: BaseModel {
     

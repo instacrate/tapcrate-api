@@ -23,7 +23,7 @@ public final class Period: NodeConvertible {
         return try Node(node: [
             "start" : try start.makeNode(in: context),
             "end" : try end.makeNode(in: context)
-            ] as [String : Node])
+        ] as [String : Node])
     }
 }
 
@@ -60,7 +60,7 @@ public final class LineItem: NodeConvertible {
         id = try node.extract("id")
         amount = try node.extract("amount")
         currency = try node.extract("currency")
-        description = try node.extract("description")
+        description = try? node.extract("description")
         discountable = try node.extract("discountable")
         livemode = try node.extract("livemode")
         metadata = try node.extract("metadata")
@@ -88,8 +88,8 @@ public final class LineItem: NodeConvertible {
             "subscription" : try subscription.makeNode(in: context),
             "subscription_item" : .string(subscription_item),
             "type" : try type.makeNode(in: context)
-            ] as [String : Node]).add(objects: [
-                "description" : description
-                ])
+        ] as [String : Node]).add(objects: [
+            "description" : description
+        ])
     }
 }

@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  subber-api
+//  tapcrate-api
 //
 //  Created by Hakon Hanesand on 9/27/16.
 //
@@ -16,12 +16,12 @@ import HTTP
 
 extension Stripe {
     
-    func createStandaloneAccount(for customer: Customer, from source: Token, on account: String) throws -> StripeCustomer {
+    static func createStandaloneAccount(for customer: Customer, from source: Token, on account: String) throws -> StripeCustomer {
         guard let customerId = customer.id?.int else {
             throw Abort.custom(status: .internalServerError, message: "Missing customer id for customer.")
         }
         
-        return try Stripe.shared.createNormalAccount(email: customer.email, source: source.id, local_id: customerId, on: account)
+        return try Stripe.createNormalAccount(email: customer.email, source: source.id, local_id: customerId, on: account)
     }
 }
 

@@ -1,6 +1,6 @@
 //
 //  MakerController.swift
-//  subber-api
+//  tapcrate-api
 //
 //  Created by Hakon Hanesand on 11/15/16.
 //
@@ -40,7 +40,7 @@ final class MakerController: ResourceRepresentable {
 
         request.multipleUserAuth.authenticate(maker)
         
-        let account = try Stripe.shared.createManagedAccount(email: maker.contactEmail, local_id: maker.id?.int)
+        let account = try Stripe.createManagedAccount(email: maker.contactEmail, local_id: maker.id?.int)
         
         maker.stripe_id = account.id
         maker.keys = account.keys

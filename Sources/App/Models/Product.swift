@@ -108,7 +108,7 @@ extension Product {
                 throw try Abort.custom(status: .internalServerError, message: "Missing secret keys for vendor. \(maker.throwableId())")
             }
             
-            let plan = try Stripe.shared.createPlan(with: fullPrice, name: name, interval: .month, on: secret)
+            let plan = try Stripe.createPlan(with: fullPrice, name: name, interval: .month, on: secret)
             let boxPlan = try ProductPlan(product: self, maker: maker, plan_id: plan.id)
             try boxPlan.save()
             

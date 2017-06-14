@@ -38,7 +38,7 @@ func save(data: Data, for product: Int) throws -> String {
         throw Abort.custom(status: .internalServerError, message: "Unable to write multipart form data to file. Underlying error \(error)")
     }
     
-    return "https://static.polymyr.com/descriptions/\(product).json"
+    return "https://static.tapcrate.com/descriptions/\(product).json"
 }
 
 final class DescriptionCollection: RouteCollection, EmptyInitializable {
@@ -51,7 +51,7 @@ final class DescriptionCollection: RouteCollection, EmptyInitializable {
         
         builder.grouped("descriptions").get(String.parameter) { request in
             let product = try request.parameters.next(String.self)
-            return "https://static.polymyr.com/descriptions/\(product)"
+            return "https://static.tapcrate.com/descriptions/\(product)"
         }
         
         builder.grouped("descriptions").patch(String.parameter) { request in

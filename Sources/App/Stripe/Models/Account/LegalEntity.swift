@@ -127,7 +127,7 @@ public final class LegalEntity: NodeConvertible {
             }
 
         case let field where field.hasSuffix("document"):
-            return ["name" : "Identity Verification", "upload" : true, "upload_info" : Node.object(["url" : "https://uploads.stripe.com/v1/files", "purpose" : "identity_document", "api_key" : .string(Stripe.token)])]
+            return ["name" : "Identity Verification", "upload" : true, "upload_info" : Node.object(["url" : "https://uploads.stripe.com/v1/files", "purpose" : "identity_document", "api_key" : .string(Stripe.publicToken)])]
             
         case "legal_entity.dob":
             return ["name" : "Date of Birth", "description" : "The date of birth for your company representative.", "key" : .string(field)]

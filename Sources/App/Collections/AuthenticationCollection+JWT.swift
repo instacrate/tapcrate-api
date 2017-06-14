@@ -39,6 +39,8 @@ final class ProviderData: NodeConvertible {
 }
 
 protocol JWTInitializable {
+
+    var sub_id: String? { get }
     
     init(subject: String, request: Request) throws
 }

@@ -1,6 +1,6 @@
 //
 //  StripeCollection.swift
-//  subber-api
+//  tapcrate-api
 //
 //  Created by Hakon Hanesand on 1/1/17.
 //
@@ -33,7 +33,7 @@ class StripeCollection: EmptyInitializable {
                             throw try Abort.custom(status: .badRequest, message: "user \(request.customer().throwableId()) doesn't have a stripe account")
                         }
                         
-                        return try Stripe.shared.update(customer: id, parameters: ["default_source" : source]).makeResponse()
+                        return try Stripe.update(customer: id, parameters: ["default_source" : source]).makeResponse()
                     }
                     
                     sources.post(String.parameter) { request in
@@ -44,9 +44,9 @@ class StripeCollection: EmptyInitializable {
                         }
                         
                         if let stripe_id = customer.stripe_id {
-                            return try Stripe.shared.associate(source: source, withStripe: stripe_id).makeResponse()
+                            return try Stripe.associate(source: source, withStripe: stripe_id).makeResponse()
                         } else {
-                            let stripeCustomer = try Stripe.shared.createNormalAccount(email: customer.email, source: source, local_id: customer.id?.int)
+                            let stripeCustomer = try Stripe.createNormalAccount(email: customer.email, source: source, local_id: customer.id?.int)
                             customer.stripe_id = stripeCustomer.id
                             try customer.save()
                             return try stripeCustomer.makeResponse()
@@ -64,7 +64,7 @@ class StripeCollection: EmptyInitializable {
                             throw try Abort.custom(status: .badRequest, message: "User \(customer.throwableId()) doesn't have a stripe account.")
                         }
                         
-                        return try Stripe.shared.delete(payment: source, from: id).makeResponse()
+                        return try Stripe.delete(payment: source, from: id).makeResponse()
                     }
                     
                     sources.get() { request in
@@ -72,7 +72,7 @@ class StripeCollection: EmptyInitializable {
                             throw Abort.badRequest
                         }
                         
-                        let cards = try Stripe.shared.paymentInformation(for: stripeId).map { try $0.makeNode(in: emptyContext) }
+                        let cards = try Stripe.paymentInformation(for: stripeId).map { try $0.makeNode(in: emptyContext) }
                         return try Node.array(cards).makeResponse()
                     }
                 }
@@ -85,18 +85,18 @@ class StripeCollection: EmptyInitializable {
                     throw Abort.custom(status: .badRequest, message: "\(country_code) is not a valid country code.")
                 }
                 
-                return try Stripe.shared.verificationRequiremnts(for: country).makeNode(in: emptyContext).makeResponse()
+                return try Stripe.verificationRequiremnts(for: country).makeNode(in: emptyContext).makeResponse()
             }
             
             stripe.group("maker") { maker in
                 
                 maker.get("disputes") { request in
-                    return try Stripe.shared.disputes().makeNode(in: emptyContext).makeResponse()
+                    return try Stripe.disputes().makeNode(in: emptyContext).makeResponse()
                 }
                 
                 maker.post("create") { request in
                     let maker = try request.maker()
-                    let account = try Stripe.shared.createManagedAccount(email: maker.contactEmail, local_id: maker.id?.int)
+                    let account = try Stripe.createManagedAccount(email: maker.contactEmail, local_id: maker.id?.int)
                     
                     maker.stripe_id = account.id
                     maker.keys = account.keys
@@ -113,7 +113,7 @@ class StripeCollection: EmptyInitializable {
                         throw Abort.custom(status: .badRequest, message: "Missing stripe id")
                     }
                     
-                    return try Stripe.shared.acceptedTermsOfService(for: stripe_id, ip: ip).makeNode(in: emptyContext).makeResponse()
+                    return try Stripe.acceptedTermsOfService(for: stripe_id, ip: ip).makeNode(in: emptyContext).makeResponse()
                 }
                 
                 maker.get("verification") { request in
@@ -123,7 +123,7 @@ class StripeCollection: EmptyInitializable {
                         throw Abort.custom(status: .badRequest, message: "maker does not have stripe id.")
                     }
                     
-                    let account = try Stripe.shared.makerInformation(for: stripe_id)
+                    let account = try Stripe.makerInformation(for: stripe_id)
                     
                     return try Node(node :[
                         "fields" : try account.descriptionsForNeededFields().makeNode(in: emptyContext)
@@ -141,7 +141,7 @@ class StripeCollection: EmptyInitializable {
                         throw Abort.custom(status: .badRequest, message: "maker is missing stripe id.")
                     }
                     
-                    return try Stripe.shared.transfers(for: secretKey).makeNode(in: emptyContext).makeResponse()
+                    return try Stripe.transfers(for: secretKey).makeNode(in: emptyContext).makeResponse()
                 }
                 
                 maker.post("verification") { request in
@@ -151,7 +151,7 @@ class StripeCollection: EmptyInitializable {
                         throw Abort.custom(status: .badRequest, message: "maker does not have stripe id")
                     }
                     
-                    let account = try Stripe.shared.makerInformation(for: stripe_id)
+                    let account = try Stripe.makerInformation(for: stripe_id)
                     let fieldsNeeded = account.filteredNeededFieldsWithCombinedDateOfBirth()
                     
                     guard var object = try request.json().permit(fieldsNeeded).node.object else {
@@ -196,7 +196,7 @@ class StripeCollection: EmptyInitializable {
                         updates[formattedKey] = string
                     }
                     
-                    return try Stripe.shared.updateAccount(id: stripe_id, parameters: updates).makeResponse()
+                    return try Stripe.updateAccount(id: stripe_id, parameters: updates).makeResponse()
                 }
             }
         }

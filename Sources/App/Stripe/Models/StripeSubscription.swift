@@ -40,6 +40,7 @@ public final class StripeSubscription: NodeConvertible {
     public let tax_percent: Double?
     public let trial_end: Date?
     public let trial_start: Date?
+    public let metadata: Node?
     
     public init(node: Node) throws {
         
@@ -65,6 +66,7 @@ public final class StripeSubscription: NodeConvertible {
         tax_percent = try? node.extract("tax_percent")
         trial_end = try? node.extract("trial_end")
         trial_start = try? node.extract("trial_start")
+        metadata = try? node.extract("metadata")
     }
     
     public func makeNode(in context: Context?) throws -> Node {
@@ -87,7 +89,8 @@ public final class StripeSubscription: NodeConvertible {
             "trial_end" : trial_end,
             "trial_start" : trial_start,
             "application_fee_percent" : application_fee_percent,
-            "discount" : discount
+            "discount" : discount,
+            "metadata" : metadata
         ])
     }
 }

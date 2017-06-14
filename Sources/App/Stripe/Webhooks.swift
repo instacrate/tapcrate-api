@@ -19,7 +19,6 @@ public final class StripeWebhookManagerCollection {
     fileprivate var webhookHandlers: [EventResource : [EventAction : (Event) throws -> (Response)]] = [:]
 
     public func registerHandler(forResource resource: EventResource, action: EventAction, handler: @escaping (Event) throws -> Response) {
-
         var resourceHanderGroup = webhookHandlers[resource] ?? [:]
         resourceHanderGroup[action] = handler
         webhookHandlers[resource] = resourceHanderGroup

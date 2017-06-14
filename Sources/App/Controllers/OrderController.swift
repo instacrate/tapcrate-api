@@ -13,7 +13,7 @@ import FluentProvider
 
 extension Stripe {
     
-    func charge(order: inout Order) throws {
+    static func charge(order: inout Order) throws {
         
         guard let customer = try order.customer().first() else {
             throw Abort.custom(status: .badRequest, message: "no customer")
@@ -31,7 +31,7 @@ extension Stripe {
             let plan = try product.subscriptionPlanIdentifier()
             let customer = try maker.connectAccount(for: customer, with: order.card)
             
-            let stripeSubscription = try Stripe.shared.subscribe(user: customer, to: plan, oneTime: false, cut: maker.cut, metadata: [:], under: secret)
+            let stripeSubscription = try Stripe.subscribe(user: customer, to: plan, oneTime: false, cut: maker.cut, metadata: [:], under: secret)
             
             item.subscribed = true
             item.subcriptionIdentifier = stripeSubscription.id
@@ -168,7 +168,7 @@ final class OrderController: ResourceRepresentable {
     
     func create(_ request: Request) throws -> ResponseRepresentable {
         var order = try Order.createOrder(for: request)
-        try Stripe.shared.charge(order: &order)
+        try Stripe.charge(order: &order)
         return try order.makeResponse()
     }
     

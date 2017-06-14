@@ -46,17 +46,17 @@ extension AuthenticationCollection {
         return key
     }
     
-    func authenticateUserFor(subject: String, with request: Request, create: Bool) throws -> AuthenticationSubject {
+    func authenticateUserFor(subject: String, with request: Request) throws -> AuthenticationSubject {
         let type: SessionType = try request.extract()
         
         switch type {
         case .customer:
-            let customer = try getAuthenticationSubject(subject: subject, request: request, create: create) as Customer
+            let customer = try getAuthenticationSubject(subject: subject, request: request) as Customer
             request.multipleUserAuth.authenticate(customer)
             return customer
             
         case .maker:
-            let maker = try getAuthenticationSubject(subject: subject, request: request, create: create) as Maker
+            let maker = try getAuthenticationSubject(subject: subject, request: request) as Maker
             request.multipleUserAuth.authenticate(maker)
             return maker
             
@@ -65,21 +65,13 @@ extension AuthenticationCollection {
         }
     }
     
-    func getAuthenticationSubject<T: AuthenticationSubject>(subject: String, request: Request? = nil, create new: Bool = true) throws -> T {
+    func getAuthenticationSubject<T: AuthenticationSubject>(subject: String, request: Request) throws -> T {
         if let callee = try T.makeQuery().filter("sub_id", subject).first() {
             return callee
         }
-        
-        if new {
-            guard let request = request else {
-                throw AuthenticationError.notAuthenticated
-            }
-            
-            let subject = try T.init(subject: subject, request: request)
-            try subject.save()
-            return subject
-        } else {
-            throw AuthenticationError.notAuthenticated
-        }
+
+        let subject = try T.init(subject: subject, request: request)
+        try subject.save()
+        return subject
     }
 }

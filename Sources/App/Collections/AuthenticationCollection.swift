@@ -22,7 +22,7 @@ final class AuthenticationCollection {
     
     static let testingPrefix = "__testing__"
     
-    typealias AuthenticationSubject = Entity & Authenticatable & JWTInitializable & NodeConvertible & Persistable
+    typealias AuthenticationSubject =  BaseModel & Authenticatable & JWTInitializable
     
     var keys: [String : String] = [:]
     
@@ -57,30 +57,31 @@ final class AuthenticationCollection {
             let keyId: String = try jwt.headers.extract("kid")
             let certificate = try self.fetchSigningKey(for: keyId).extractRSACertificate()
             let signer = try RS256(x509Cert: certificate)
-        
-            let claims: [Claim] = [
-                ExpirationTimeClaim(createTimestamp: { return Seconds(Date().timeIntervalSince1970) }, leeway: 60),
-                AudienceClaim(string: "tapcrate"),
-                IssuerClaim(string: "https://securetoken.google.com/tapcrate"),
-                SubjectClaim(string: subject),
-                IssuedAtClaimComparison(createTimestamp: { return Seconds(Date().timeIntervalSince1970) }, leeway: 60)
-            ]
-            
-            do {
-                try jwt.verifySignature(using: signer)
-            } catch {
-                throw Abort.custom(status: .badRequest, message: "Failed to verify JWT token with error : \(error)")
-            }
-            
+
             if drop.config.environment != .development {
+                let claims: [Claim] = [
+                    ExpirationTimeClaim(createTimestamp: { return Seconds(Date().timeIntervalSince1970) }, leeway: 60),
+                    AudienceClaim(string: "tapcrate"),
+                    IssuerClaim(string: "https://securetoken.google.com/tapcrate"),
+                    SubjectClaim(string: subject),
+                    IssuedAtClaimComparison(createTimestamp: { return Seconds(Date().timeIntervalSince1970) }, leeway: 60)
+                ]
+
+
                 do {
                     try jwt.verifyClaims(claims)
                 } catch {
                     throw Abort.custom(status: .badRequest, message: "Failed to verifiy claims with error \(error)")
                 }
             }
-            
-            return try self.authenticateUserFor(subject: subject, with: request, create: true).makeResponse()
+
+            do {
+                try jwt.verifySignature(using: signer)
+            } catch {
+                throw Abort.custom(status: .badRequest, message: "Failed to verify JWT token with error : \(error)")
+            }
+
+            return try self.authenticateUserFor(subject: subject, with: request).makeResponse()
         }
     }
 }

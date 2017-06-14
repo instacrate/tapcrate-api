@@ -1,6 +1,6 @@
 //
 //  UserController.swift
-//  subber-api
+//  tapcrate-api
 //
 //  Created by Hakon Hanesand on 11/12/16.
 //
@@ -36,7 +36,7 @@ final class CustomerController {
                         throw Abort.custom(status: .badRequest, message: "No stripe id")
                     }
                     
-                    return try [Stripe.shared.paymentInformation(for: stripe_id)]
+                    return try [Stripe.paymentInformation(for: stripe_id)]
                     
                 case "shipping":
                     return try [customers[0].shippingAddresses().all().makeNode(in: jsonContext)]

@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  subber-api
+//  tapcrate-api
 //
 //  Created by Hakon Hanesand on 1/18/17.
 //
@@ -39,6 +39,7 @@ public enum EventResource: String {
     case account
     case charge
     case invoice
+    case subscription = "customer.subscription"
     
     var internalModelType: NodeConvertible.Type {
         switch self {
@@ -48,6 +49,8 @@ public enum EventResource: String {
             return Charge.self
         case .invoice:
             return Invoice.self
+        case .subscription:
+            return Subscription.self
         }
     }
 }

@@ -1,6 +1,6 @@
 //
 //  Maker.swift
-//  subber-api
+//  tapcrate-api
 //
 //  Created by Hakon Hanesand on 9/27/16.
 //
@@ -85,6 +85,7 @@ final class Maker: BaseModel, JWTInitializable, SessionPersistable {
     var keys: Keys?
     
     var missingFields: Bool
+    var informationDueBy: Date?
     var needsIdentityUpload: Bool
     
     var sub_id: String?
@@ -239,18 +240,18 @@ extension Maker {
         
         if let connectAccount = try self.connectCustomers().filter("customer_id", customer_id).first() {
             
-            let hasPaymentMethod = try Stripe.shared.paymentInformation(for: connectAccount.stripeCustomerId, under: secretKey).filter { $0.id == card }.count > 0
+            let hasPaymentMethod = try Stripe.paymentInformation(for: connectAccount.stripeCustomerId, under: secretKey).filter { $0.id == card }.count > 0
             
             if !hasPaymentMethod {
                 // TODO : right now we hit this every time....
-                let token = try Stripe.shared.createToken(for: stripeCustomerId, representing: card, on: secretKey)
-                let _ = try Stripe.shared.associate(source: token.id, withStripe: connectAccount.stripeCustomerId, under: secretKey)
+                let token = try Stripe.createToken(for: stripeCustomerId, representing: card, on: secretKey)
+                let _ = try Stripe.associate(source: token.id, withStripe: connectAccount.stripeCustomerId, under: secretKey)
             }
             
             return connectAccount.stripeCustomerId
         } else {
-            let token = try Stripe.shared.createToken(for: stripeCustomerId, representing: card, on: secretKey)
-            let stripeCustomer = try Stripe.shared.createStandaloneAccount(for: customer, from: token, on: secretKey)
+            let token = try Stripe.createToken(for: stripeCustomerId, representing: card, on: secretKey)
+            let stripeCustomer = try Stripe.createStandaloneAccount(for: customer, from: token, on: secretKey)
             
             let connectAccount = try StripeMakerCustomer(maker: self, customer: customer, account: stripeCustomer.id)
             try connectAccount.save()

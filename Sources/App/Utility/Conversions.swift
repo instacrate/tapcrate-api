@@ -1,6 +1,6 @@
 //
 //  Entity+Relation.swift
-//  subber-api
+//  tapcrate-api
 //
 //  Created by Hakon Hanesand on 9/28/16.
 //
