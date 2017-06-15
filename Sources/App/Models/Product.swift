@@ -122,4 +122,8 @@ extension Product: Protected {
     func owner() throws -> ModelOwner {
         return .maker(id: maker_id)
     }
+
+    var actionsAllowedForPublic: [ActionType] {
+        return [.create, .read]
+    }
 }

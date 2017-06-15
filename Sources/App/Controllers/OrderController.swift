@@ -147,9 +147,29 @@ final class OrderController: ResourceRepresentable {
         try Order.ensure(action: .read, isAllowedOn: order, by: request)
         
         switch type {
-        case .customer: fallthrough
-        case .anonymous:
-            return try order.makeResponse()
+        case .customer:
+            let subscriptions = try order.items().all()
+            let address = try order.address().all()[0]
+
+            let makerIds = try subscriptions.map { $0.maker_id.int! }.unique().converted(to: Array<Node>.self, in: jsonContext)
+            let makers = try Maker.makeQuery().filter(.subset(Maker.idKey, .in, makerIds)).all()
+
+            var subscriptionArray: [Node] = []
+
+            for subscription in subscriptions {
+                let maker = makers.filter { $0.id!.int! == subscription.maker_id.int }.first
+
+                var subscriptionNode = try subscription.makeNode(in: jsonContext)
+                try subscriptionNode.replace(relation: "maker", with: maker.makeNode(in: jsonContext))
+                subscriptionArray.append(subscriptionNode)
+            }
+
+            var orderNode = try order.makeNode(in: jsonContext)
+            orderNode["subscriptions"] = try subscriptionArray.makeNode(in: jsonContext)
+
+            try orderNode.replace(relation: "customer_address", with: address.makeNode(in: jsonContext))
+
+            return try orderNode.makeResponse()
             
         case .maker:
             let subscriptions = try order.items().all()
@@ -163,6 +183,9 @@ final class OrderController: ResourceRepresentable {
             try orderNode.replace(relation: "customer", with: customer.makeNode(in: jsonContext))
         
             return try orderNode.makeResponse()
+
+        case .anonymous:
+            return try order.makeResponse()
         }
     }
     

@@ -59,6 +59,7 @@ struct AddTimestampableToAllEntities: Preparation {
             builder.date(Review.updatedAtKey, default: Date())
         }
         try? database.modify(Subscription.self) { builder in
+            builder.parent(Customer.self)
             builder.date(Subscription.createdAtKey, default: Date())
             builder.date(Subscription.updatedAtKey, default: Date())
         }
