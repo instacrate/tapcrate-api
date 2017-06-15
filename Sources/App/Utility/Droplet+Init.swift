@@ -85,6 +85,8 @@ extension Droplet {
                 PageView.self,
                 Review.self,
 
+                Email.self,
+
                 AddTimestampableToAllEntities.self
             ] as [Preparation.Type]
 

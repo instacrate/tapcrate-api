@@ -34,3 +34,18 @@ final class TagController: ResourceRepresentable {
         )
     }
 }
+
+final class EmailController: ResourceRepresentable {
+
+    func create(_ request: Request) throws -> ResponseRepresentable {
+        let email: Email = try request.extractModel()
+        try email.save()
+        return try email.makeResponse()
+    }
+
+    func makeResource() -> Resource<Email> {
+        return Resource(
+            store: create
+        )
+    }
+}

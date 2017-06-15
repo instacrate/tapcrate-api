@@ -42,6 +42,8 @@ drop.group(middleware: persist) { persistable in
     
     persistable.resource("products", ProductController())
     persistable.nested(base: "products", controller: PictureController<Product, ProductPicture>())
+
+    persistable.resource("emails", EmailController())
     
     persistable.resource("reviews", ReviewController())
     
