@@ -110,7 +110,8 @@ protocol Protected {
     // Defaults to all actions
     var actionsAllowedForOwner: [ActionType] { get }
 
-    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by request: Request) throws
+    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by request: Request) throws -> Bool
+    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by subject: SessionType, on request: Request) throws -> Bool
 }
 
 extension Protected where Self: Model {
@@ -123,27 +124,33 @@ extension Protected where Self: Model {
         return ActionType.all
     }
     
-    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by request: Request) throws {
-        if let _ = try? request.customer() {
-            try ensure(action: action, isAllowedOn: model, by: .customer, on: request)
-            return
+    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by request: Request) throws -> Bool {
+        if
+            let _ = try? request.customer(),
+            let allowed = try? ensure(action: action, isAllowedOn: model, by: .customer, on: request),
+            allowed
+        {
+            return true
         }
 
-        if let _ = try? request.maker() {
-            try ensure(action: action, isAllowedOn: model, by: .maker, on: request)
-            return
+        if
+            let _ = try? request.maker(),
+            let allowed = try? ensure(action: action, isAllowedOn: model, by: .maker, on: request),
+            allowed
+        {
+            return true
         }
 
-        try ensure(action: action, isAllowedOn: model, by: .anonymous, on: request)
+        return try ensure(action: action, isAllowedOn: model, by: .anonymous, on: request)
     }
 
-    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by subject: SessionType, on request: Request) throws {
+    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by subject: SessionType, on request: Request) throws -> Bool {
         guard let owners = try? model.owners() else {
             if action != .create {
                 throw Abort.custom(status: .unauthorized, message: "Can only create.")
             }
 
-            return
+            return true
         }
 
         for owner in owners {
@@ -157,7 +164,7 @@ extension Protected where Self: Model {
             }
 
             if allowedActions.contains(action) {
-                return
+                return true
             }
         }
 
