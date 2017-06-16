@@ -22,9 +22,10 @@ enum ModelOwner {
 
     case customer(id: Identifier)
     case maker(id: Identifier)
+    case shared(members: [ModelOwner])
     case any
 
-    func matches(entity _entity: Entity?) throws -> Bool {
+    func matches(entity _entity: Entity?) -> Bool {
         guard let entity = _entity else {
             return false
         }
@@ -34,10 +35,18 @@ enum ModelOwner {
             return true
 
         case let .maker(id) where entity is Maker:
-            return try entity.id() == id
-
+            return (try? entity.id() == id) ?? false
         case let .customer(id) where entity is Customer:
-            return try entity.id() == id
+            return (try? entity.id() == id) ?? false
+
+        case let .shared(members):
+            for owner in members {
+                if owner.matches(entity: entity) {
+                    return true
+                }
+            }
+
+            return false
 
         default:
             return false
@@ -54,21 +63,24 @@ enum ModelOwner {
 
         case let .customer(id):
             return "Customer(\(id.string ?? ""))"
+
+        case let .shared(members):
+            return members.map { $0.explained }.joined(separator: ", ")
         }
     }
 }
 
 extension Request {
 
-    func authenticatedEntity(for modelOwner: ModelOwner) -> Entity? {
+    func authenticatedEntity(for modelOwner: SessionType) -> Entity? {
         switch modelOwner {
-        case .any:
+        case .anonymous:
             return nil
 
-        case .maker(_):
+        case .maker:
             return try? self.maker()
 
-        case .customer(_):
+        case .customer:
             return try? self.customer()
         }
     }
@@ -90,7 +102,7 @@ extension Request {
 
 protocol Protected {
 
-    func owner() throws -> ModelOwner
+    func owners() throws -> [ModelOwner]
 
     // Defaults to create
     var actionsAllowedForPublic: [ActionType] { get }
@@ -112,7 +124,21 @@ extension Protected where Self: Model {
     }
     
     static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by request: Request) throws {
-        guard let owner = try? model.owner() else {
+        if let _ = try? request.customer() {
+            try ensure(action: action, isAllowedOn: model, by: .customer, on: request)
+            return
+        }
+
+        if let _ = try? request.maker() {
+            try ensure(action: action, isAllowedOn: model, by: .maker, on: request)
+            return
+        }
+
+        try ensure(action: action, isAllowedOn: model, by: .anonymous, on: request)
+    }
+
+    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by subject: SessionType, on request: Request) throws {
+        guard let owners = try? model.owners() else {
             if action != .create {
                 throw Abort.custom(status: .unauthorized, message: "Can only create.")
             }
@@ -120,18 +146,22 @@ extension Protected where Self: Model {
             return
         }
 
-        let requester = request.authenticatedEntity(for: owner)
-        let allowedActions: [ActionType]
+        for owner in owners {
+            let requester = request.authenticatedEntity(for: subject)
+            let allowedActions: [ActionType]
 
-        if try owner.matches(entity: requester) {
-            allowedActions = model.actionsAllowedForOwner
-        } else {
-            allowedActions = model.actionsAllowedForPublic
+            if owner.matches(entity: requester) {
+                allowedActions = model.actionsAllowedForOwner
+            } else {
+                allowedActions = model.actionsAllowedForPublic
+            }
+
+            if allowedActions.contains(action) {
+                return
+            }
         }
 
-        if !allowedActions.contains(action) {
-            throw try Abort.custom(status: .unauthorized, message: "You can not access \(type(of: model))(\(model.id().int ?? 0)). It is owned by \(model.owner().explained), while you are authenticated as \(request.allAuthenticatedTypes().map { $0.explained }.joined(separator: ", "))")
-        }
+        throw try Abort.custom(status: .unauthorized, message: "You can not access \(type(of: model))(\(model.id().int ?? 0)). It is owned by \(model.owners().map { $0.explained }.joined(separator: ", ")), while you are authenticated as \(request.allAuthenticatedTypes().map { $0.explained }.joined(separator: ", "))")
     }
 }
 

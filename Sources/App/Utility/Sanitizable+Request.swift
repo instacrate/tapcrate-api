@@ -64,6 +64,7 @@ extension Request {
         }
 
         var modelJSON = try model.makeNode(in: rowContext)
+        print("\(modelJSON["createdAt"] ?? ""))")
         json.forEach { modelJSON[$0.key] = Node($0.value) }
 
         let model = try M(node: modelJSON)

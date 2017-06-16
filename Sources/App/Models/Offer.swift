@@ -47,6 +47,9 @@ final class Offer: BaseModel {
             maker_id = try node.extract("maker_id")
         }
 
+        createdAt = try? node.extract(Offer.createdAtKey)
+        updatedAt = try? node.extract(Offer.updatedAtKey)
+
         id = try? node.extract("id")
     }
     
@@ -97,7 +100,7 @@ extension Offer {
 
 extension Offer: Protected {
 
-    func owner() throws -> ModelOwner {
-        return .maker(id: maker_id)
+    func owners() throws -> [ModelOwner] {
+        return [.maker(id: maker_id)]
     }
 }

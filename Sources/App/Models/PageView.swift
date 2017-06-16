@@ -26,6 +26,9 @@ final class PageView: BaseModel {
         
         customer_id = try? node.extract("customer_id")
         product_id = try node.extract("product_id")
+
+        createdAt = try? node.extract(PageView.createdAtKey)
+        updatedAt = try? node.extract(PageView.updatedAtKey)
         
         id = try? node.extract("id")
     }

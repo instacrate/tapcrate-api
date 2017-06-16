@@ -38,6 +38,9 @@ final class StripeMakerCustomer: BaseInternalModel {
         customer_id = try node.extract("customer_id")
         maker_id = try node.extract("maker_id")
         stripeCustomerId = try node.extract("stripeCustomerId")
+
+        createdAt = try? node.extract(StripeMakerCustomer.createdAtKey)
+        updatedAt = try? node.extract(StripeMakerCustomer.updatedAtKey)
         
         id = try? node.extract("id")
     }

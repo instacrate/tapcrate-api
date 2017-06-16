@@ -21,6 +21,9 @@ final class Tag: BaseModel {
     
     init(node: Node) throws {
         name = try node.extract("name")
+
+        createdAt = try? node.extract(Tag.createdAtKey)
+        updatedAt = try? node.extract(Tag.updatedAtKey)
         
         id = try? node.extract("id")
     }

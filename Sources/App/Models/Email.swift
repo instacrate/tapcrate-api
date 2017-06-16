@@ -25,6 +25,9 @@ final class Email: BaseModel {
         email = try node.extract("email")
         customer_id = try? node.extract("customer_id")
 
+        createdAt = try? node.extract(Email.createdAtKey)
+        updatedAt = try? node.extract(Email.updatedAtKey)
+
         id = try? node.extract("id")
     }
 

@@ -29,6 +29,9 @@ final class ProductPlan: BaseInternalModel {
         plan_id = try node.extract("plan_id")
         product_id = try node.extract("product_id")
         maker_id = try node.extract("maker_id")
+
+        createdAt = try? node.extract(ProductPlan.createdAtKey)
+        updatedAt = try? node.extract(ProductPlan.updatedAtKey)
         
         id = try? node.extract("id")
     }

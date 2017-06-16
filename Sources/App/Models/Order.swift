@@ -51,6 +51,9 @@ final class Order: BaseModel {
         customer_address_id = try node.extract("customer_address_id")
     
         card = try node.extract("card")
+        createdAt = try? node.extract(Order.createdAtKey)
+        updatedAt = try? node.extract(Order.updatedAtKey)
+
         id = try? node.extract("id")
     }
     
@@ -97,8 +100,10 @@ extension Order {
 
 extension Order: Protected {
 
-    func owner() throws -> ModelOwner {
-        return .customer(id: customer_id)
+    func owners() throws -> [ModelOwner] {
+        var owners = try self.items().all().map { ModelOwner.maker(id: $0.maker_id) }
+        owners.append(.customer(id: customer_id))
+        return owners
     }
 }
 

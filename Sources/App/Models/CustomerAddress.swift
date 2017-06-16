@@ -40,6 +40,9 @@ final class CustomerAddress: BaseModel {
         zip = try node.extract("zip")
         phoneNumber = try? node.extract("phoneNumber")
         apartment = try? node.extract("apartment")
+
+        createdAt = try? node.extract(CustomerAddress.createdAtKey)
+        updatedAt = try? node.extract(CustomerAddress.updatedAtKey)
         
         id = try? node.extract("id")
     }
@@ -84,8 +87,8 @@ final class CustomerAddress: BaseModel {
 
 extension CustomerAddress: Protected {
 
-    func owner() throws -> ModelOwner {
-        return try .customer(id: customer_id)
+    func owners() throws -> [ModelOwner] {
+        return [try .customer(id: customer_id)]
     }
 }
 

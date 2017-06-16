@@ -45,6 +45,9 @@ final class ProductPicture: PictureBase {
             self.maker_id = try maker.id()
         }
 
+        createdAt = try? node.extract(ProductPicture.createdAtKey)
+        updatedAt = try? node.extract(ProductPicture.updatedAtKey)
+
         id = try? node.extract("id")
     }
 
@@ -76,8 +79,8 @@ final class ProductPicture: PictureBase {
 
 extension ProductPicture: Protected {
 
-    func owner() throws -> ModelOwner {
-        return .maker(id: maker_id)
+    func owners() throws -> [ModelOwner] {
+        return [.maker(id: maker_id)]
     }
 }
 

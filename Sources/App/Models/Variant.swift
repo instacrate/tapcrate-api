@@ -44,6 +44,9 @@ final class Variant: BaseModel {
             }
         }
 
+        createdAt = try? node.extract(Variant.createdAtKey)
+        updatedAt = try? node.extract(Variant.updatedAtKey)
+
         id = try? node.extract("id")
     }
     
@@ -87,8 +90,8 @@ final class Variant: BaseModel {
 
 extension Variant: Protected  {
 
-    func owner() throws -> ModelOwner {
-        return .maker(id: maker_id)
+    func owners() throws -> [ModelOwner] {
+        return [.maker(id: maker_id)]
     }
 }
 

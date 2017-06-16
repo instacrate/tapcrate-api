@@ -39,6 +39,9 @@ final class MakerAddress: BaseModel {
         }
         
         apartment = try? node.extract("apartment")
+
+        createdAt = try? node.extract(MakerAddress.createdAtKey)
+        updatedAt = try? node.extract(MakerAddress.updatedAtKey)
         
         id = try? node.extract("id")
     }
@@ -77,7 +80,7 @@ final class MakerAddress: BaseModel {
 
 extension MakerAddress: Protected {
 
-    func owner() throws -> ModelOwner {
-        return .maker(id: maker_id)
+    func owners() throws -> [ModelOwner] {
+        return [.maker(id: maker_id)]
     }
 }

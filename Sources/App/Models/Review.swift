@@ -29,6 +29,9 @@ final class Review: BaseModel {
         
         product_id = try node.extract("product_id")
         customer_id = try node.extract("customer_id")
+
+        createdAt = try? node.extract(Review.createdAtKey)
+        updatedAt = try? node.extract(Review.updatedAtKey)
         
         id = try? node.extract("id")
     }
@@ -63,8 +66,8 @@ final class Review: BaseModel {
 
 extension Review: Protected {
 
-    func owner() throws -> ModelOwner {
-        return .customer(id: customer_id)
+    func owners() throws -> [ModelOwner] {
+        return [.customer(id: customer_id)]
     }
 }
 

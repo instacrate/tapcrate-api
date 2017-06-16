@@ -121,6 +121,9 @@ final class Maker: BaseModel, JWTInitializable, SessionPersistable {
         
         missingFields = (try? node.extract("missingFields")) ?? false
         needsIdentityUpload = (try? node.extract("needsIdentityUpload")) ?? false
+
+        createdAt = try? node.extract(Maker.createdAtKey)
+        updatedAt = try? node.extract(Maker.updatedAtKey)
         
         if stripe_id != nil {
             let publishable: String = try node.extract("publishableKey")
@@ -220,8 +223,8 @@ extension Maker {
 
 extension Maker: Protected {
 
-    func owner() throws -> ModelOwner {
-        return try .maker(id: id())
+    func owners() throws -> [ModelOwner] {
+        return [try .maker(id: id())]
     }
 }
 

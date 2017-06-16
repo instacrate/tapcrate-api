@@ -30,6 +30,9 @@ final class CustomerPicture: PictureBase {
             customer_id = try node.extract("customer_id")
         }
 
+        createdAt = try? node.extract(CustomerPicture.createdAtKey)
+        updatedAt = try? node.extract(CustomerPicture.updatedAtKey)
+
         id = try? node.extract("id")
     }
 
@@ -59,7 +62,7 @@ final class CustomerPicture: PictureBase {
 
 extension CustomerPicture: Protected {
 
-    func owner() throws -> ModelOwner {
-        return .customer(id: customer_id)
+    func owners() throws -> [ModelOwner] {
+        return [.customer(id: customer_id)]
     }
 }

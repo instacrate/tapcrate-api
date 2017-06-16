@@ -66,7 +66,7 @@ final class CustomerController {
     }
     
     func modify(_ request: Request, customer: Customer) throws -> ResponseRepresentable {
-        try Customer.ensure(action: .read, isAllowedOn: customer, by: request)
+        try Customer.ensure(action: .write, isAllowedOn: customer, by: request)
         
         let customer: Customer = try request.patchModel(customer)
         try customer.save()

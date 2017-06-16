@@ -54,12 +54,17 @@ final class Customer: BaseModel, JWTInitializable, SessionPersistable {
         name = try node.extract("name")
         stripe_id = try? node.extract("stripe_id")
         sub_id = try? node.extract("sub_id")
+
+        createdAt = try? node.extract(Customer.createdAtKey)
+        updatedAt = try? node.extract(Customer.updatedAtKey)
         
         id = try? node.extract("id")
     }
     
     func makeNode(in context: Context?) throws -> Node {
-        return try Node(node: [
+        print("createdAt : \(createdAt?.description ?? ""). updatedAt: \(updatedAt?.description ?? "")")
+
+        let test = try Node(node: [
             "name" : .string(name),
             "email" : .string(email)
         ]).add(objects: [
@@ -69,6 +74,9 @@ final class Customer: BaseModel, JWTInitializable, SessionPersistable {
             Customer.createdAtKey : createdAt,
             Customer.updatedAtKey : updatedAt
         ])
+
+        print("createdAt : \(test["createdAt"]?.string ?? ""). updatedAt: \(test["updatedAt"]?.string ?? "")")
+        return test
     }
     
     static func prepare(_ database: Database) throws {
@@ -103,8 +111,8 @@ extension Customer {
 
 extension Customer: Protected {
 
-    func owner() throws -> ModelOwner {
-        return try .customer(id: id())
+    func owners() throws -> [ModelOwner] {
+        return [try .customer(id: id())]
     }
 }
 

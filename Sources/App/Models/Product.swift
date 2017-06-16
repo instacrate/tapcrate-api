@@ -30,6 +30,9 @@ final class Product: BaseModel {
         longDescription = try node.extract("longDescription")
         maker_id = try node.extract("maker_id")
 
+        createdAt = try? node.extract(Product.createdAtKey)
+        updatedAt = try? node.extract(Product.updatedAtKey)
+
         id = try? node.extract("id")
     }
     
@@ -119,8 +122,8 @@ extension Product {
 
 extension Product: Protected {
 
-    func owner() throws -> ModelOwner {
-        return .maker(id: maker_id)
+    func owners() throws -> [ModelOwner] {
+        return [.maker(id: maker_id)]
     }
 
     var actionsAllowedForPublic: [ActionType] {

@@ -59,6 +59,9 @@ final class Subscription: BaseModel {
         fulfilled = (try? node.extract("fulfilled")) ?? false
         oneTime = (try? node.extract("oneTime")) ?? false
         variants = try node["variants"]?.object?.converted(in: emptyContext)
+
+        createdAt = try? node.extract(Subscription.createdAtKey)
+        updatedAt = try? node.extract(Subscription.updatedAtKey)
         
         id = try? node.extract("id")
     }
@@ -116,8 +119,8 @@ final class Subscription: BaseModel {
 
 extension Subscription: Protected {
 
-    func owner() throws -> ModelOwner {
-        return .customer(id: customer_id)
+    func owners() throws -> [ModelOwner] {
+        return [.customer(id: customer_id)]
     }
 }
 
