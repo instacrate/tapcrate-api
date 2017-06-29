@@ -4,10 +4,6 @@ import PackageDescription
 
 let package = Package(
     name: "tapcrate-api",
-    products: [
-        .library(name: "lib", type: .dynamic, targets: ["lib"]),
-        .executable(name: "api", targets: ["api"])
-    ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "2.0.0"),
         .package(url: "https://github.com/vapor/mysql-provider.git", from: "2.0.0"),
@@ -17,19 +13,13 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "lib",
-            dependencies: [
-                .product(name: "Vapor"),
-                .product(name: "MySQLProvider"),
-                .product(name: "JWT"),
-                .product(name: "AuthProvider"),
-                .product(name: "Paginator")
-            ]
-        ),
-        .target(
             name: "api",
             dependencies: [
-                .target(name: "tapcrate-lib")
+                "Vapor",
+                "MySQLProvider",
+                "JWT",
+                "AuthProvider",
+                "Paginator"
             ],
             exclude: [
                 "Config",
@@ -39,4 +29,3 @@ let package = Package(
         )
     ]
 )
-

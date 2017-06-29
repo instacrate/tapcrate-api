@@ -201,7 +201,7 @@
       },
       {
         "package": "Paginator",
-        "repositoryURL": "https://github.com/nodes-vapor/paginator",
+        "repositoryURL": "https://github.com/nodes-vapor/paginator.git",
         "state": {
           "branch": null,
           "revision": "f3d08cce284469cbc02003e5e0b59038da96dabb",
@@ -213,8 +213,8 @@
         "repositoryURL": "https://github.com/vapor/random.git",
         "state": {
           "branch": null,
-          "revision": "c3e3737f52b4ac8ffa0eaaba2c19186b9fd816f5",
-          "version": "1.0.0"
+          "revision": "813e49b1bacba950f0149eab3277e02247255b42",
+          "version": "1.1.1"
         }
       },
       {
@@ -258,8 +258,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "9776b323329f25cade5ac23d50785dffefd99396",
-          "version": "2.1.0"
+          "revision": "a6a954d31d1165e635a0496340dfa3b375c98036",
+          "version": "2.1.1"
         }
       }
     ]
