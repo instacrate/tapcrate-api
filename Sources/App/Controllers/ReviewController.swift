@@ -13,7 +13,13 @@ import HTTP
 final class ReviewController: ResourceRepresentable {
     
     func create(_ request: Request) throws -> ResponseRepresentable {
-        let review: Review = try request.extractModel(injecting: request.customerInjectable())
+        let customer = try request.customer()
+
+        let review: Review = try request.extractModel(injecting: [
+            "customer_id" : customer.id().converted(),
+            "author" : .string(customer.name)
+        ])
+
         try Review.ensure(action: .create, isAllowedOn: review, by: request)
         try review.save()
         

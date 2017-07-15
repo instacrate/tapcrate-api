@@ -18,6 +18,7 @@ final class Review: BaseModel {
     static var permitted: [String] = ["text", "rating", "product_id", "customer_id"]
     
     let text: String
+    let author: String
     let rating: Int
     
     var product_id: Identifier
@@ -26,6 +27,7 @@ final class Review: BaseModel {
     init(node: Node) throws {
         text = try node.extract("text")
         rating = try node.extract("rating")
+        author = try node.extract("author")
         
         product_id = try node.extract("product_id")
         customer_id = try node.extract("customer_id")
@@ -39,6 +41,7 @@ final class Review: BaseModel {
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "text" : .string(text),
+            "author" : .string(author),
             "rating" : .number(.int(rating)),
             "product_id" : product_id.makeNode(in: context),
             "customer_id" : customer_id.makeNode(in: context)
@@ -54,6 +57,7 @@ final class Review: BaseModel {
             review.id()
             review.string("text")
             review.string("rating")
+            review.string("author")
             review.parent(Product.self)
             review.parent(Customer.self)
         })

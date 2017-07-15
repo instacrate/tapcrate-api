@@ -36,7 +36,7 @@ public final class StripeWebhookManagerCollection {
                 let event = try Event(node: node)
 
                 guard let handler = self.webhookHandlers[event.resource]?[event.action] else {
-                    return Response(status: .notImplemented)
+                    return Response(status: .ok)
                 }
 
                 return try handler(event)
