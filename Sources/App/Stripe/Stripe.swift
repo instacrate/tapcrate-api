@@ -30,7 +30,7 @@ fileprivate func merge(query: [String: NodeRepresentable?], with metadata: [Stri
 public final class Stripe {
 
     public static let publicToken = "pk_test_lGLXGH2jjEx7KFtPmAYz39VA"
-    private static let secretToken = "sk_test_WceGrEBqnYpjCYF6exFBXvnf"
+    public static let secretToken = "sk_test_WceGrEBqnYpjCYF6exFBXvnf"
 
     private static let base = HTTPClient(baseURL: "https://api.stripe.com/v1/", publicToken, secretToken)
     private static let uploads = HTTPClient(baseURL: "https://uploads.stripe.com/v1/", publicToken, secretToken)

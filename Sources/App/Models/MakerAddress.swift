@@ -81,6 +81,12 @@ final class MakerAddress: BaseModel {
 extension MakerAddress: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [.maker(id: maker_id)]
+        return try [ModelOwner(modelType: Maker.self, id: id())]
+    }
+
+    static func expandableParents() -> [Relation]? {
+        return [
+            Relation(parent: Maker.self)
+        ]
     }
 }

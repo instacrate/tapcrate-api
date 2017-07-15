@@ -10,180 +10,59 @@ import Vapor
 import HTTP
 import Fluent
 import FluentProvider
-
-enum Sort: String, TypesafeOptionsParameter {
-
-    case alpha
-    case price
-    case new
-    case none
-    
-    static let key = "sort"
-    static let values = [Sort.alpha.rawValue, Sort.new.rawValue, Sort.price.rawValue, Sort.none.rawValue]
-    static let defaultValue: Sort? = Sort.none
-    
-    var field: String {
-        switch self {
-        case .alpha:
-            return "name"
-        case .price:
-            return "fullPrice"
-        case .new:
-            // TODO : hacky
-            return "id"
-        case .none:
-            return ""
-        }
-    }
-    
-    func modify<T>(_ query: Query<T>) throws -> Query<T> {
-        if self == .none {
-            return query
-        }
-        
-        return try query.sort(field, .ascending)
-    }
-}
-
-struct Expander<T: Model & NodeConvertible>: QueryInitializable {
-    
-    static var key: String {
-        return "expand"
-    }
-    
-    let expandKeyPaths: [String]
-    
-    init(node: Node) throws {
-        expandKeyPaths = node.string?.components(separatedBy: ",") ?? []
-    }
-    
-    func expand(for models: [T], mappings: @escaping (String, [T], [Node]) throws -> [NodeRepresentable]) throws -> Node {
-        let ids = models.map { $0.id!.makeNode(in: jsonContext) }
-        
-        let relationships = try expandKeyPaths.map { relation in
-            return try (relation, mappings(relation, models, ids))
-        }
-        
-        var result: [Node] = []
-        
-        for owner in models {
-            try result.append(.object([T.name : owner.makeNode(in: jsonContext)]))
-        }
-        
-        for (key, relations) in relationships {
-            for (index, relation) in relations.enumerated() {
-                try result[index].set(key, relation.makeNode(in: jsonContext))
-            }
-        }
-        
-        return Node.array(result).makeNode(in: jsonContext)
-    }
-    
-    func expand(for model: T, mappings: @escaping (String, [T], [Node]) throws -> [NodeRepresentable]) throws -> Node {
-        return try expand(for: [model] as [T], mappings: mappings).array!.first!
-    }
-}
-
-public struct ParentContext<Parent: Entity>: Context {
-    
-    public let parent_id: Identifier
-
-    init(_ parent: Identifier?) throws {
-        guard let identifier = parent else {
-            throw Abort.custom(status: .internalServerError, message: "Parent context does not have id")
-        }
-        
-        parent_id = identifier
-    }
-}
-
-public struct SecondaryParentContext<Parent: Entity, Secondary: Entity>: Context {
-
-    public let parent_id: Identifier
-    public let secondary_id: Identifier
-
-    init(_ _parent: Identifier?, _ _secondary: Identifier?) throws {
-        guard let parent = _parent else {
-            throw Abort.custom(status: .internalServerError, message: "Parent context does not have parent id")
-        }
-
-        guard let secondary = _secondary else {
-            throw Abort.custom(status: .internalServerError, message: "Parent context does not have secondary id")
-        }
-
-        self.parent_id = parent
-        self.secondary_id = secondary
-    }
-}
+import Paginator
 
 final class ProductController: ResourceRepresentable {
     
     func index(_ request: Request) throws -> ResponseRepresentable {
         
         let sort = try request.extract() as Sort
+        var query: Query<Product> = try Product.makeQuery()
         
-        let products = try { () -> [Product] in
-            if let maker = request.query?["maker"]?.bool, maker {
-                let maker = try request.maker()
-                return try sort.modify(maker.products().makeQuery()).all()
+        if let maker = request.query?["maker"]?.bool, maker {
+            let maker = try request.maker()
+            query = try maker.products().makeQuery()
+        }
+
+        let sortedQuery = try sort.modify(query)
+
+        let paginator: Paginator<Product> = try sortedQuery.paginator(15, request: request) { models in
+            if models.count == 0 {
+                return Node.array([])
             }
-            
-            return try sort.modify(Product.makeQuery()).all()
-        }()
-        
-        if products.count == 0 {
-            return try Node.array([]).makeResponse()
-        }
-        
-        if let expander: Expander<Product> = try request.extract() {
-            return try expander.expand(for: products) { (key, products, identifiers) -> [NodeRepresentable] in
-                switch key {
-                case "tags":
-                    return try products.map {
-                        try $0.tags().all().makeNode(in: jsonContext)
+
+            if let expander: Expander<Product> = try request.extract() {
+                return try expander.expand(for: models) { (relation, identifiers: [Identifier]) in
+                    switch relation.path {
+                    case "tags":
+                        return try collect(identifiers: identifiers, base: Product.self, relation: relation) as [[Tag]]
+
+                    case "makers":
+                        let makerIds = models.map { $0.maker_id }
+                        return try collect(identifiers: makerIds, base: Product.self, relation: relation) as [[Maker]]
+
+                    case "product_pictures":
+                        return try collect(identifiers: identifiers, base: Product.self, relation: relation) as [[ProductPicture]]
+
+                    case "offers":
+                        return try collect(identifiers: identifiers, base: Product.self, relation: relation) as [[Offer]]
+
+                    case "variants":
+                        return try collect(identifiers: identifiers, base: Product.self, relation: relation) as [[Variant]]
+
+                    case "reviews":
+                        return try collect(identifiers: identifiers, base: Product.self, relation: relation) as [[Review]]
+
+                    default:
+                        throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(relation.path) on \(type(of: self)).")
                     }
-                case "maker":
-                    let makerIds = products.map { $0.maker_id.makeNode(in: jsonContext) }
-                    let makers = try Maker.makeQuery().filter(.subset(Maker.idKey, .in, makerIds)).all()
-                    
-                    return try makerIds.map { id in
-                        try makers.filter { try $0.id.makeNode(in: emptyContext) == id }.first
-                    }
-                case "pictures":
-                    let pictures = try ProductPicture.makeQuery().filter(.subset(Product.foreignIdKey, .in, identifiers)).all()
-                    
-                    return try identifiers.map { id in
-                        try pictures.filter { try $0.product_id == id.converted(in: emptyContext) }
-                    }
-                    
-                case "offers":
-                    let offers = try Offer.makeQuery().filter(.subset(Product.foreignIdKey, .in, identifiers)).all()
-                    
-                    return try identifiers.map { id in
-                        try offers.filter { try $0.product_id == id.converted(in: emptyContext) }
-                    }
-                    
-                case "variants":
-                    let variants = try Variant.makeQuery().filter(.subset(Product.foreignIdKey, .in, identifiers)).all()
-                    
-                    return try identifiers.map { id in
-                        try variants.filter { try $0.product_id == id.converted(in: emptyContext) }
-                    }
-                    
-                case "reviews":
-                    let reviews = try Review.makeQuery().filter(.subset(Product.foreignIdKey, .in, identifiers)).all()
-                    
-                    return try identifiers.map { id in
-                        try reviews.filter { try $0.product_id == id.converted(in: emptyContext) }
-                    }
-                    
-                default:
-                    throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
                 }
-            }.makeResponse()
+            }
+
+            return try models.makeNode(in: jsonContext)
         }
-        
-        return try products.makeResponse()
+
+        return try paginator.makeResponse()
     }
     
     func show(_ request: Request, product: Product) throws -> ResponseRepresentable {
@@ -191,22 +70,22 @@ final class ProductController: ResourceRepresentable {
         try Product.ensure(action: .read, isAllowedOn: product, by: request)
         
         if let expander: Expander<Product> = try request.extract() {
-            return try expander.expand(for: product, mappings: { (key, products, identifiers) -> [NodeRepresentable] in
-                switch key {
+            return try expander.expand(for: product, mappings: { (relation, identifier: Identifier) -> [NodeRepresentable] in
+                switch relation.path {
                 case "tags":
-                    return try [products[0].tags().all().makeNode(in: jsonContext)]
+                    return try product.tags().all()
                 case "maker":
-                    return try products[0].maker().limit(1).all()
-                case "pictures":
-                    return try [products[0].pictures().all()]
+                    return try product.maker().limit(1).all()
+                case "product_pictures":
+                    return try product.pictures().all()
                 case "offers":
-                    return try [products[0].offers().all()]
+                    return try product.offers().all()
                 case "variants":
-                    return try [products[0].variants().all()]
+                    return try product.variants().all()
                 case "reviews":
-                    return try [products[0].reviews().all()]
+                    return try product.reviews().all()
                 default:
-                    throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
+                    throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(relation.path) on \(type(of: self)).")
                 }
             }).makeResponse()
         }
@@ -255,7 +134,7 @@ final class ProductController: ResourceRepresentable {
                 try pivot.save()
                 
                 return tag
-                }.flatMap { $0 }
+            }.flatMap { $0 }
             
             result["tags"] = try tags.makeNode(in: emptyContext)
         }

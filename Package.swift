@@ -13,19 +13,26 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "api",
+            name: "lib",
             dependencies: [
-                "Vapor",
-                "MySQLProvider",
-                "JWT",
-                "AuthProvider",
-                "Paginator"
+                Target.Dependency(stringLiteral: "Vapor"),
+                Target.Dependency(stringLiteral: "MySQLProvider"),
+                Target.Dependency(stringLiteral: "JWT"),
+                Target.Dependency(stringLiteral: "AuthProvider"),
+                Target.Dependency(stringLiteral: "Paginator")
             ],
+            path: "Sources",
             exclude: [
                 "Config",
                 "Database",
                 "Public"
             ]
+        ),
+        .target(
+            name: "api",
+            dependencies: [
+                Target.Dependency(stringLiteral: "lib")
+            ]
         )
-    ]
+    ]   
 )

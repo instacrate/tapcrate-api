@@ -7,6 +7,7 @@
 
 import HTTP
 import FluentProvider
+import Node
 
 enum ActionType {
     
@@ -18,62 +19,24 @@ enum ActionType {
     static let all: [ActionType] = [.read, .write, .create, .delete]
 }
 
-enum ModelOwner {
+struct ModelOwner: Equatable {
 
-    case customer(id: Identifier)
-    case maker(id: Identifier)
-    case shared(members: [ModelOwner])
-    case any
+    let modelType: Model.Type
+    let id: Identifier
 
-    func matches(entity _entity: Entity?) -> Bool {
-        guard let entity = _entity else {
-            return false
-        }
-
-        switch self {
-        case .any:
-            return true
-
-        case let .maker(id) where entity is Maker:
-            return (try? entity.id() == id) ?? false
-        case let .customer(id) where entity is Customer:
-            return (try? entity.id() == id) ?? false
-
-        case let .shared(members):
-            for owner in members {
-                if owner.matches(entity: entity) {
-                    return true
-                }
-            }
-
-            return false
-
-        default:
-            return false
-        }
+    static func ==(lhs: ModelOwner, rhs: ModelOwner) -> Bool {
+        return lhs.modelType == rhs.modelType && lhs.id == rhs.id
     }
 
     var explained: String {
-        switch self {
-        case .any:
-            return "Any"
-
-        case let .maker(id):
-            return "Maker(\(id.string ?? ""))"
-
-        case let .customer(id):
-            return "Customer(\(id.string ?? ""))"
-
-        case let .shared(members):
-            return members.map { $0.explained }.joined(separator: ", ")
-        }
+        return "\(String(describing: modelType))(\(id))"
     }
 }
 
 extension Request {
 
-    func authenticatedEntity(for modelOwner: SessionType) -> Entity? {
-        switch modelOwner {
+    func sessionAuthenticatedUser(for type: SessionType) -> Entity? {
+        switch type {
         case .anonymous:
             return nil
 
@@ -88,12 +51,18 @@ extension Request {
     func allAuthenticatedTypes() throws -> [ModelOwner] {
         var authenticated: [ModelOwner] = []
 
-        if let customer = self.multipleUserAuth.authenticated(Customer.self) {
-            try authenticated.append(.customer(id: customer.id()))
+        if
+            let customer = self.multipleUserAuth.authenticated(Customer.self),
+            let owner = try? ModelOwner(modelType: Customer.self, id: customer.id())
+        {
+            authenticated.append(owner)
         }
 
-        if let maker = self.multipleUserAuth.authenticated(Maker.self) {
-            try authenticated.append(.maker(id: maker.id()))
+        if
+            let maker = self.multipleUserAuth.authenticated(Maker.self),
+            let owner = try? ModelOwner(modelType: Maker.self, id: maker.id())
+        {
+            authenticated.append(owner)
         }
 
         return authenticated
@@ -110,8 +79,8 @@ protocol Protected {
     // Defaults to all actions
     var actionsAllowedForOwner: [ActionType] { get }
 
+    @discardableResult
     static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by request: Request) throws -> Bool
-    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by subject: SessionType, on request: Request) throws -> Bool
 }
 
 extension Protected where Self: Model {
@@ -123,49 +92,18 @@ extension Protected where Self: Model {
     var actionsAllowedForOwner: [ActionType] {
         return ActionType.all
     }
-    
+
+    @discardableResult
     static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by request: Request) throws -> Bool {
-        if
-            let _ = try? request.customer(),
-            let allowed = try? ensure(action: action, isAllowedOn: model, by: .customer, on: request),
-            allowed
-        {
+        let owners = try model.owners()
+        let sessions = try request.allAuthenticatedTypes()
+
+        let hasOwningSession = owners.contains { sessions.contains($0) }
+
+        if hasOwningSession && model.actionsAllowedForOwner.contains(action) {
             return true
-        }
-
-        if
-            let _ = try? request.maker(),
-            let allowed = try? ensure(action: action, isAllowedOn: model, by: .maker, on: request),
-            allowed
-        {
+        } else if !hasOwningSession && model.actionsAllowedForPublic.contains(action) {
             return true
-        }
-
-        return try ensure(action: action, isAllowedOn: model, by: .anonymous, on: request)
-    }
-
-    static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by subject: SessionType, on request: Request) throws -> Bool {
-        guard let owners = try? model.owners() else {
-            if action != .create {
-                throw Abort.custom(status: .unauthorized, message: "Can only create.")
-            }
-
-            return true
-        }
-
-        for owner in owners {
-            let requester = request.authenticatedEntity(for: subject)
-            let allowedActions: [ActionType]
-
-            if owner.matches(entity: requester) {
-                allowedActions = model.actionsAllowedForOwner
-            } else {
-                allowedActions = model.actionsAllowedForPublic
-            }
-
-            if allowedActions.contains(action) {
-                return true
-            }
         }
 
         throw try Abort.custom(status: .unauthorized, message: "You can not access \(type(of: model))(\(model.id().int ?? 0)). It is owned by \(model.owners().map { $0.explained }.joined(separator: ", ")), while you are authenticated as \(request.allAuthenticatedTypes().map { $0.explained }.joined(separator: ", "))")

@@ -120,7 +120,10 @@ final class Subscription: BaseModel {
 extension Subscription: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [.customer(id: customer_id)]
+        return [
+            ModelOwner(modelType: Maker.self, id: maker_id),
+            ModelOwner(modelType: Customer.self, id: customer_id)
+        ]
     }
 }
 

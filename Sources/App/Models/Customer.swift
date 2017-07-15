@@ -112,8 +112,19 @@ extension Customer {
 extension Customer: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [try .customer(id: id())]
+        return try [ModelOwner(modelType: Customer.self, id: id())]
     }
 }
 
 extension Customer: Authenticatable {}
+
+extension Customer {
+
+    func stripeId() throws -> String {
+        guard let id = self.stripe_id else {
+            throw try Abort.custom(status: .badRequest, message: "Customer(\(self.id()) does not have a stripe id, call /stripe/customer/sources/{{latest_token}} to create one.")
+        }
+
+        return id
+    }
+}

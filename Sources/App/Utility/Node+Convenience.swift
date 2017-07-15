@@ -13,8 +13,8 @@ import FluentProvider
 import Vapor
 import Foundation
 
-typealias BaseModel = Entity & Model & Timestampable & Preparation & NodeConvertible & Sanitizable
-typealias BaseInternalModel = Entity & Model & Timestampable & Preparation & NodeConvertible
+typealias BaseModel = Entity & Model & Timestampable & Preparation & NodeConvertible & Expandable & Sanitizable
+typealias BaseInternalModel = Entity & Model & Timestampable & Preparation & NodeConvertible & Expandable
 
 extension NodeError {
     func appendPath(_ path: [PathIndexer]) -> NodeError {

@@ -29,20 +29,16 @@ final class CustomerController {
         try Customer.ensure(action: .read, isAllowedOn: customer, by: request)
         
         if let expander: Expander<Customer> = try request.extract() {
-            return try expander.expand(for: customer, mappings: { (key, customers, identifier) -> [NodeRepresentable] in
-                switch key {
+            return try expander.expand(for: customer, mappings: { (relation, identifier: Identifier) -> [NodeRepresentable] in
+                switch relation.path {
                 case "cards":
-                    guard let stripe_id = customers[0].stripe_id else {
-                        throw Abort.custom(status: .badRequest, message: "No stripe id")
-                    }
-                    
-                    return try [Stripe.paymentInformation(for: stripe_id)]
+                    return try Stripe.paymentInformation(for: customer.stripeId())
                     
                 case "shipping":
-                    return try [customers[0].shippingAddresses().all().makeNode(in: jsonContext)]
+                    return try customer.shippingAddresses().all()
                     
                 default:
-                    throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(key) on \(type(of: self)).")
+                    throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(relation.path) on \(type(of: self)).")
                 }
             }).makeResponse()
         }

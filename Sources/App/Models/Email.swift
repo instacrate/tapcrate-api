@@ -57,3 +57,12 @@ final class Email: BaseModel {
     }
 }
 
+extension Email {
+
+    static func expandableParents() -> [Relation]? {
+        return [
+            Relation(parent: Customer.self)
+        ]
+    }
+}
+

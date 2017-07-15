@@ -43,6 +43,13 @@ final class ProductPicture: PictureBase {
             }
 
             self.maker_id = try maker.id()
+
+            if let _: Identifier = try? node.get("id") {
+                // We have been previously saved to the database, so save the
+                // maker_id we just had to fetch to the row so its faster next time
+
+                try self.save()
+            }
         }
 
         createdAt = try? node.extract(ProductPicture.createdAtKey)
@@ -54,10 +61,11 @@ final class ProductPicture: PictureBase {
     func makeNode(in context: Context?) throws -> Node {
         return try Node(node: [
             "url" : .string(url),
-            "type" : .number(.int(type))
+            "type" : .number(.int(type)),
+            "product_id" : Identifier(product_id),
+            "maker_id" : Identifier(maker_id)
         ]).add(objects: [
             "id" : id,
-            "product_id" : product_id,
             ProductPicture.createdAtKey : createdAt,
             ProductPicture.updatedAtKey : updatedAt
         ])
@@ -69,6 +77,7 @@ final class ProductPicture: PictureBase {
             picture.string("url")
             picture.int("type")
             picture.parent(Product.self)
+            picture.parent(Maker.self, unique: false)
         }
     }
 
@@ -80,7 +89,7 @@ final class ProductPicture: PictureBase {
 extension ProductPicture: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [.maker(id: maker_id)]
+        return [ModelOwner(modelType: Maker.self, id: maker_id)]
     }
 }
 

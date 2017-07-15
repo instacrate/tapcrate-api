@@ -157,7 +157,7 @@ final class Maker: BaseModel, JWTInitializable, SessionPersistable {
             "id" : id,
             "stripe_id" : stripe_id,
             "publishableKey" : keys?.publishable,
-            "secretKey" : keys?.secret,
+            "secretKey" : (context?.isRow ?? false) ? keys?.secret : nil,
             "sub_id" : sub_id,
             "password" : (context?.isRow ?? false) ? password : nil,
             Maker.createdAtKey : createdAt,
@@ -219,12 +219,16 @@ extension Maker {
     func pictures() -> Children<Maker, MakerPicture> {
         return children()
     }
+
+    static func expandableParents() -> [Relation]? {
+        return nil
+    }
 }
 
 extension Maker: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [try .maker(id: id())]
+        return try [ModelOwner(modelType: Maker.self, id: id())]
     }
 }
 

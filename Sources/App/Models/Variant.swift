@@ -91,7 +91,7 @@ final class Variant: BaseModel {
 extension Variant: Protected  {
 
     func owners() throws -> [ModelOwner] {
-        return [.maker(id: maker_id)]
+        return [ModelOwner(modelType: Maker.self, id: maker_id)]
     }
 }
 

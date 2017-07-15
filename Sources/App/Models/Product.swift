@@ -95,6 +95,18 @@ extension Product {
     func reviews() -> Children<Product, Review> {
         return children()
     }
+
+    static func expandableParents() -> [Relation]? {
+        return [
+            Relation(parent: Maker.self),
+            Relation(child: ProductPicture.self),
+            Relation(child: Offer.self),
+            Relation(child: Tag.self),
+            Relation(child: ProductPlan.self),
+            Relation(child: Variant.self),
+            Relation(child: Review.self)
+        ]
+    }
 }
 
 extension Product {
@@ -123,7 +135,7 @@ extension Product {
 extension Product: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [.maker(id: maker_id)]
+        return [ModelOwner(modelType: Maker.self, id: maker_id)]
     }
 
     var actionsAllowedForPublic: [ActionType] {

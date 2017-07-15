@@ -94,15 +94,21 @@ extension Order {
     }
     
     func items() -> Children<Order, Subscription> {
-        return children(type: Subscription.self)
+        return children()
+    }
+
+    static func expandableParents() -> [Relation]? {
+        return [
+            Relation(parent: CustomerAddress.self)
+        ]
     }
 }
 
 extension Order: Protected {
 
     func owners() throws -> [ModelOwner] {
-        var owners = try self.items().all().map { ModelOwner.maker(id: $0.maker_id) }
-        owners.append(.customer(id: customer_id))
+        var owners = try self.items().all().map { ModelOwner(modelType: Maker.self, id: $0.maker_id) }
+        owners.append(ModelOwner(modelType: Customer.self, id: customer_id))
         return owners
     }
 }

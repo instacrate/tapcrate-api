@@ -88,7 +88,7 @@ final class CustomerAddress: BaseModel {
 extension CustomerAddress: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [try .customer(id: customer_id)]
+        return [ModelOwner(modelType: Customer.self, id: customer_id)]
     }
 }
 
@@ -96,5 +96,11 @@ extension CustomerAddress {
     
     func customer() -> Parent<CustomerAddress, Customer> {
         return parent(id: customer_id)
+    }
+
+    static func expandableParents() -> [Relation]? {
+        return [
+            Relation(parent: Customer.self)
+        ]
     }
 }

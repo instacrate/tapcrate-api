@@ -96,11 +96,18 @@ extension Offer {
     func maker() -> Parent<Offer, Maker> {
         return parent(id: maker_id)
     }
+
+    static func expandableParents() -> [Relation]? {
+        return [
+            Relation(parent: Product.self),
+            Relation(parent: Maker.self)
+        ]
+    }
 }
 
 extension Offer: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [.maker(id: maker_id)]
+        return [ModelOwner(modelType: Maker.self, id: maker_id)]
     }
 }

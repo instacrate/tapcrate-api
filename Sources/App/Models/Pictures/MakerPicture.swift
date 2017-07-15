@@ -63,6 +63,6 @@ final class MakerPicture: PictureBase {
 extension MakerPicture: Protected {
 
     func owners() throws -> [ModelOwner] {
-        return [.maker(id: maker_id)]
+        return [ModelOwner(modelType: MakerPicture.self, id: maker_id)]
     }
 }
