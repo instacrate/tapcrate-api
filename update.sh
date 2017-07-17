@@ -57,6 +57,11 @@ if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- ./Package.pins)" ]; then
 	vapor fetch --verbose
 fi
 
+if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- ./Package.swift)" ]; then
+	echo "\n>>>> vapor fetch --verbose"
+	vapor fetch --verbose
+fi
+
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
 	echo "\n>>>> vapor build --release=true --fetch=false --verbose"
 	vapor build --release=true --fetch=false --verbose
