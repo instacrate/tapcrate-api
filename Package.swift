@@ -3,9 +3,8 @@
 import PackageDescription
 
 let package = Package(
-    name: "tapcrate-api",
+    name: "api",
     products: [
-        .library(name: "lib", targets: ["lib"]),
         .executable(name: "api", targets: ["api"])
     ],
     dependencies: [
@@ -17,26 +16,18 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "lib",
+            name: "api",
             dependencies: [
                 "Vapor",
                 "MySQLProvider",
                 "JWT",
                 "AuthProvider",
-                "Paginator",
-                "Promise"
+                "Paginator"
             ],
             path: "Sources",
             exclude: [
                 "Config",
-                "Database",
                 "Public"
-            ]
-        ),
-        .target(
-            name: "api",
-            dependencies: [
-                "lib"
             ]
         )
     ]   
