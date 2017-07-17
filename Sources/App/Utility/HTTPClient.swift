@@ -30,7 +30,9 @@ final class HTTPClient {
     }
     
     func checkForError(in json: JSON, from resource: String) throws {
-
+        if json["error"] != nil {
+            throw StripeHTTPError(node: json.node, code: .internalServerError, resource: resource)
+        }
     }
 
     func get<T: NodeConvertible>(_ resource: String, query: [String : NodeRepresentable] = [:]) throws -> T {

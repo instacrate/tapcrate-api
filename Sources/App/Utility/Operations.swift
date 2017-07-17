@@ -26,14 +26,3 @@ public extension Sequence {
         return categories
     }
 }
-
-func merge<K, V>(keys: [K], with values: [V]) -> [K: V] {
-    var dictionary: [K: V] = [:]
-
-    zip(keys, values).forEach { (arg) in
-        let (key, value) = arg
-        dictionary[key] = value
-    }
-
-    return dictionary
-}

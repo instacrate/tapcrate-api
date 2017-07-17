@@ -32,7 +32,7 @@ final class ProductController: ResourceRepresentable {
             }
 
             if let expander: Expander<Product> = try request.extract() {
-                return try expander.expand(for: models) { (relation, identifiers: [Identifier]) in
+                return try expander.expand(for: models) { (relation: Relation, identifiers: [Identifier]) -> [[NodeRepresentable]] in
                     switch relation.path {
                     case "tags":
                         return try collect(identifiers: identifiers, base: Product.self, relation: relation) as [[Tag]]
@@ -41,7 +41,7 @@ final class ProductController: ResourceRepresentable {
                         let makerIds = models.map { $0.maker_id }
                         return try collect(identifiers: makerIds, base: Product.self, relation: relation) as [[Maker]]
 
-                    case "product_pictures":
+                    case "pictures":
                         return try collect(identifiers: identifiers, base: Product.self, relation: relation) as [[ProductPicture]]
 
                     case "offers":
@@ -56,7 +56,7 @@ final class ProductController: ResourceRepresentable {
                     default:
                         throw Abort.custom(status: .badRequest, message: "Could not find expansion for \(relation.path) on \(type(of: self)).")
                     }
-                }
+                }.converted(in: jsonContext)
             }
 
             return try models.makeNode(in: jsonContext)
@@ -74,9 +74,9 @@ final class ProductController: ResourceRepresentable {
                 switch relation.path {
                 case "tags":
                     return try product.tags().all()
-                case "maker":
+                case "makers":
                     return try product.maker().limit(1).all()
-                case "product_pictures":
+                case "pictures":
                     return try product.pictures().all()
                 case "offers":
                     return try product.offers().all()

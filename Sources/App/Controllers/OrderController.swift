@@ -11,6 +11,63 @@ import Vapor
 import Fluent
 import FluentProvider
 
+import Foundation
+
+extension StructuredData.Number: Hashable {
+
+    public var hashValue: Int {
+        switch self {
+        case let .int(int):
+            return int.hashValue
+
+        case let .double(double):
+            return double.hashValue
+
+        case let .uint(uint):
+            return uint.hashValue
+        }
+    }
+}
+
+extension StructuredData: Hashable {
+
+    public var hashValue: Int {
+        switch self {
+
+        case let .bool(bool):
+            return bool.hashValue
+
+        case let .number(number):
+            return number.hashValue
+
+        case let .string(string):
+            return string.hashValue
+
+        case let .date(date):
+            return date.hashValue
+
+        case let .bytes(bytes):
+            return bytes.makeString().hashValue
+
+        case let .array(array):
+            return array.reduce(0) { acc, item in 31 * acc + item.hashValue }
+
+        case let .object(object):
+            return object.reduce(0) { acc, item in 31 * acc + item.value.hashValue }
+
+        case .null:
+            return 0
+        }
+    }
+}
+
+extension StructuredDataWrapper {
+
+    public var hashValue: Int {
+        return wrapped.hashValue
+    }
+}
+
 extension Stripe {
     
     static func charge(order: inout Order) throws {
@@ -136,57 +193,63 @@ final class OrderController: ResourceRepresentable {
             }
             
             return try result.makeResponse()
-        case .anonymous:
-            return try Order.all().makeResponse()
         }
     }
     
     func show(_ request: Request, order: Order) throws -> ResponseRepresentable {
         
         let type: SessionType = try request.extract()
+
         try Order.ensure(action: .read, isAllowedOn: order, by: request)
-        
-        switch type {
-        case .customer:
-            let subscriptions = try order.items().all()
-            let address = try order.address().all()[0]
 
-            let makerIds = try subscriptions.map { $0.maker_id.int! }.unique().converted(to: Array<Node>.self, in: jsonContext)
-            let makers = try Maker.makeQuery().filter(.subset(Maker.idKey, .in, makerIds)).all()
+        let subscriptions = try order.items().all()
+        let address = try order.address().all()[0]
 
-            var subscriptionArray: [Node] = []
+        var orderNode = try order.makeNode(in: jsonContext)
 
-            for subscription in subscriptions {
-                let maker = makers.filter { $0.id!.int! == subscription.maker_id.int }.first
-
-                var subscriptionNode = try subscription.makeNode(in: jsonContext)
-                try subscriptionNode.replace(relation: "maker", with: maker.makeNode(in: jsonContext))
-                subscriptionArray.append(subscriptionNode)
+        let customer = try { () throws -> Customer in
+            switch type {
+            case .customer:
+                return try request.customer()
+            case .maker:
+                return try order.customer().all()[0]
             }
+        }()
 
-            var orderNode = try order.makeNode(in: jsonContext)
-            orderNode["subscriptions"] = try subscriptionArray.makeNode(in: jsonContext)
 
-            try orderNode.replace(relation: "customer_address", with: address.makeNode(in: jsonContext))
+        orderNode["subscriptions"] = try { () throws -> Node in
+            switch type {
+            case .customer:
+                let makerIds: [Identifier] = try subscriptions.map { $0.maker_id.wrapped }.unique().converted(in: emptyContext)
+                let makers: [[Maker]] = try collect(identifiers: makerIds, base: Subscription.self, relation: Relation(parent: Maker.self))
 
-            return try orderNode.makeResponse()
-            
-        case .maker:
-            let subscriptions = try order.items().all()
-            let address = try order.address().all()[0]
+                return try zip(subscriptions, makers).map { (arg: (Subscription, [Maker])) throws -> Node in
+                    let (subscription, makers) = arg
+                    var node = try subscription.makeNode(in: jsonContext)
+                    try node.replace(relation: "maker", with: makers.first.makeNode(in: jsonContext))
+                    return node
+                }.converted(in: jsonContext)
+
+            case .maker:
+                return try subscriptions.converted(in: jsonContext)
+            }
+        }()
+
+        try orderNode.replace(relation: "customer_address", with: address.makeNode(in: jsonContext))
+
+        if type == .maker {
             let customer = try order.customer().all()[0]
-        
-            var orderNode = try order.makeNode(in: jsonContext)
-        
-            try orderNode["subscriptions"] = subscriptions.makeNode(in: jsonContext)
-            try orderNode.replace(relation: "customer_address", with: address.makeNode(in: jsonContext))
             try orderNode.replace(relation: "customer", with: customer.makeNode(in: jsonContext))
-        
-            return try orderNode.makeResponse()
-
-        case .anonymous:
-            return try order.makeResponse()
         }
+
+        let card = try Portal<String>.open { portal in
+            let card = try Stripe.getCard(with: order.card, for: customer.stripeId())
+            portal.close(with: card.last4)
+        }
+
+        orderNode["last4"] = .string(card)
+
+        return try orderNode.makeResponse()
     }
     
     func create(_ request: Request) throws -> ResponseRepresentable {

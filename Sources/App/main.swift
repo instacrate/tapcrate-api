@@ -55,6 +55,8 @@ drop.group(middleware: persist) { persistable in
     
     persistable.resource("orders", OrderController())
     persistable.resource("variants", VariantController())
+
+    persistable.resource("onboard", EmailController())
     
     StripeCollection().build(persistable)
     DescriptionCollection().build(persistable)

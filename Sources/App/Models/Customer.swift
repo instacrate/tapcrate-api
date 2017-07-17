@@ -62,9 +62,7 @@ final class Customer: BaseModel, JWTInitializable, SessionPersistable {
     }
     
     func makeNode(in context: Context?) throws -> Node {
-        print("createdAt : \(createdAt?.description ?? ""). updatedAt: \(updatedAt?.description ?? "")")
-
-        let test = try Node(node: [
+        return try Node(node: [
             "name" : .string(name),
             "email" : .string(email)
         ]).add(objects: [
@@ -74,9 +72,6 @@ final class Customer: BaseModel, JWTInitializable, SessionPersistable {
             Customer.createdAtKey : createdAt,
             Customer.updatedAtKey : updatedAt
         ])
-
-        print("createdAt : \(test["createdAt"]?.string ?? ""). updatedAt: \(test["updatedAt"]?.string ?? "")")
-        return test
     }
     
     static func prepare(_ database: Database) throws {
@@ -106,6 +101,13 @@ extension Customer {
 
     func orders() -> Children<Customer, Order> {
         return children()
+    }
+
+    static func expandableParents() -> [Relation]? {
+        return [
+            Relation(child: CustomerAddress.self, path: "shipping"),
+            Relation(type: Maker.self, path: "cards", isMany: true)
+        ]
     }
 }
 

@@ -36,9 +36,6 @@ extension AuthenticationCollection {
             
             request.multipleUserAuth.authenticate(maker)
             return try maker.makeResponse()
-            
-        case .anonymous:
-            throw Abort.custom(status: .badRequest, message: "Can not sign user up with anonymous session type.")
         }
     }
 }

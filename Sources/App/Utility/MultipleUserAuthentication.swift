@@ -205,9 +205,6 @@ extension Request {
 
         case .maker:
             return try multipleUserAuth.assertAuthenticated(Maker.self)
-
-        case .anonymous:
-            throw Abort.custom(status: .unauthorized, message: "you can not access this resource")
         }
     }
 }

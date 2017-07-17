@@ -221,7 +221,9 @@ extension Maker {
     }
 
     static func expandableParents() -> [Relation]? {
-        return nil
+        return [
+            Relation(child: MakerPicture.self, path: "pictures")
+        ]
     }
 }
 

@@ -9,7 +9,8 @@ let package = Package(
         .package(url: "https://github.com/vapor/mysql-provider.git", from: "2.0.0"),
         .package(url: "https://github.com/vapor/jwt.git", from: "2.0.0"),
         .package(url: "https://github.com/vapor/auth-provider.git", from: "1.0.0"),
-        .package(url: "https://github.com/nodes-vapor/paginator.git", from: "1.0.0")
+        .package(url: "https://github.com/nodes-vapor/paginator.git", from: "1.0.0"),
+        .package(url: "https://github.com/khanlou/Promise.git", from: "1.0.0")
     ],
     targets: [
         .target(

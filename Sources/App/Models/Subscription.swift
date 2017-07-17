@@ -140,4 +140,12 @@ extension Subscription {
     func offer() -> Parent<Subscription, Offer> {
         return parent(id: offer_id)
     }
+
+    func expandableParents() -> [Relation] {
+        return [
+            Relation(parent: Maker.self),
+            Relation(parent: Product.self),
+            Relation(parent: Offer.self)
+        ]
+    }
 }

@@ -15,17 +15,27 @@ struct Relation {
     let type: Model.Type
     let name: String
     let path: String
+    let isMany: Bool
 
     init(parent: Model.Type) {
         type = parent
         name = parent.idKey
         path = parent.entity
+        isMany = false
     }
 
-    init(child: Model.Type) {
+    init(child: Model.Type, path: String? = nil, hasMany: Bool = true) {
         type = child
         name = child.idKey
-        path = child.entity
+        self.path = path ?? child.entity
+        isMany = hasMany
+    }
+
+    init(type: Model.Type, path: String, isMany: Bool = false) {
+        self.type = type
+        self.path = path
+        name = type.entity
+        self.isMany = isMany
     }
 }
 
@@ -53,6 +63,8 @@ func collect<R: Model, B: Model, Identifier: StructuredDataWrapper>(identifiers:
     }
 }
 
+
+
 struct Expander<T: BaseModel>: QueryInitializable {
 
     static var key: String {
@@ -65,7 +77,7 @@ struct Expander<T: BaseModel>: QueryInitializable {
         expandKeyPaths = node.string?.components(separatedBy: ",") ?? []
     }
 
-    func expand<N: StructuredDataWrapper, T: BaseModel>(for models: [T], mappings: @escaping (Relation, [N]) throws -> [[NodeRepresentable]]) throws -> Node {
+    func expand<N: StructuredDataWrapper, T: BaseModel>(for models: [T], mappings: @escaping (Relation, [N]) throws -> [[NodeRepresentable]]) throws -> [Node] {
         let ids = try models.map { try $0.id().converted(to: N.self) }
 
         guard let expandlableRelationships = T.expandableParents() else {
@@ -92,17 +104,17 @@ struct Expander<T: BaseModel>: QueryInitializable {
 
                 if entities.count == 0 {
                     ownerNode[relationship.path] = Node.null
-                } else if entities.count == 1 {
-                    ownerNode[relationship.path] = try entities[0].converted(in: jsonContext)
+                } else if entities.count == 1 && !relationship.isMany {
+                    ownerNode[relationship.path] = try entities[0].makeNode(in: jsonContext)
                 } else {
-                    ownerNode[relationship.path] = try entities.converted(in: jsonContext)
+                    ownerNode[relationship.path] = try Node.array(entities.map { try $0.makeNode(in: jsonContext) })
                 }
-
-                result.append(ownerNode)
             }
+
+            result.append(ownerNode)
         }
 
-        return Node.array(result)
+        return result
     }
 
     func expand<N: StructuredDataWrapper, T: BaseModel>(for model: T, mappings: @escaping (Relation, N) throws -> [NodeRepresentable]) throws -> Node {
@@ -110,7 +122,12 @@ struct Expander<T: BaseModel>: QueryInitializable {
             return try [mappings(relation, identifiers[0])]
         })
 
-        // If it is a one element array, remove the array
-        return node.array?.first ?? node
+        if node.count == 0 {
+            return Node.null
+        } else if node.count == 1 {
+            return node[0]
+        } else {
+            return Node.array(node)
+        }
     }
 }

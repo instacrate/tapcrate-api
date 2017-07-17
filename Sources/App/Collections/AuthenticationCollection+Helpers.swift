@@ -59,9 +59,6 @@ extension AuthenticationCollection {
             let maker = try getAuthenticationSubject(subject: subject, request: request) as Maker
             request.multipleUserAuth.authenticate(maker)
             return maker
-            
-        case .anonymous:
-            throw Abort.custom(status: .badRequest, message: "Can not sign user up with anonymous session type.")
         }
     }
     

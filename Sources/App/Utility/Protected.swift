@@ -37,9 +37,6 @@ extension Request {
 
     func sessionAuthenticatedUser(for type: SessionType) -> Entity? {
         switch type {
-        case .anonymous:
-            return nil
-
         case .maker:
             return try? self.maker()
 
@@ -95,6 +92,11 @@ extension Protected where Self: Model {
 
     @discardableResult
     static func ensure<ModelType: Protected & Model>(action: ActionType, isAllowedOn model: ModelType, by request: Request) throws -> Bool {
+        if action == .create {
+            // Allow everyone to create
+            return true
+        }
+
         let owners = try model.owners()
         let sessions = try request.allAuthenticatedTypes()
 

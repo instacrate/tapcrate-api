@@ -131,6 +131,10 @@ public final class Stripe {
         return try base.post("accounts/\(id)", query: parameters)
     }
 
+    public static func getCard(with id: String, for customer: String) throws -> Card {
+        return try base.get("customers/\(customer)/sources/\(id)")
+    }
+
     public static func checkForError(in json: JSON, from resource: String) throws {
         if json["error"] != nil {
             throw StripeHTTPError(node: json.node, code: .internalServerError, resource: resource)

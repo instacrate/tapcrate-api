@@ -99,7 +99,7 @@ extension Product {
     static func expandableParents() -> [Relation]? {
         return [
             Relation(parent: Maker.self),
-            Relation(child: ProductPicture.self),
+            Relation(child: ProductPicture.self, path: "pictures"),
             Relation(child: Offer.self),
             Relation(child: Tag.self),
             Relation(child: ProductPlan.self),
