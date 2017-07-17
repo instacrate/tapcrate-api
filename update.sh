@@ -53,18 +53,18 @@ if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- nginx/)" ]; then
 fi
 
 if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- ./Package.pins)" ]; then
-	echo "\n>>>> vapor fetch --verbose"
-	vapor fetch --verbose
+	echo "\n>>>> vapor resolve --verbose"
+	vapor resolve --verbose
 fi
 
 if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- ./Package.swift)" ]; then
-	echo "\n>>>> vapor fetch --verbose"
-	vapor fetch --verbose
+	echo "\n>>>> vapor resolve --verbose"
+	vapor resolve --verbose
 fi
 
 if [ "$(git diff --name-only $CURRENT_GIT_SHA HEAD -- ./Package.resolved)" ]; then
-	echo "\n>>>> vapor fetch --verbose"
-	vapor fetch --verbose
+	echo "\n>>>> vapor resolve --verbose"
+	vapor resolve --verbose
 fi
 
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then
