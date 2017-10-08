@@ -31,7 +31,7 @@ server {
 
     server_name tapcrate.com www.tapcrate.com;
 
-    root /home/hakon/tapcrate-web;
+    root /home/jasper/tapcrate-web;
     index index.php index.html;
 
     location / {
