@@ -3,7 +3,7 @@ Description=Tapcrate Production API server
 After=network.target
 
 [Service]
-ExecStart=/bin/bash /home/hakon/tapcrate/tapcrate-api/start.sh -f /var/run/tapcrated.pid
+ExecStart=/bin/bash /home/hakon/tapcrate-api/start.sh -f /var/run/tapcrated.pid
 Type=forking
 PIDFile=/var/run/tapcrated.pid
 Restart=always

@@ -31,7 +31,7 @@ server {
 
     server_name tapcrate.com www.tapcrate.com;
 
-    root /home/developer/tapcrate;
+    root /var/www/html;
     index index.php index.html;
 
     location / {
@@ -56,7 +56,7 @@ server {
 #include snippets/ssl-api.tapcrate.com.conf;
 #include snippets/ssl-params.conf;
 
-    root /home/hakon/tapcrate/tapcrate-api;
+    root /home/hakon/tapcrate-api;
 
     server_name api.tapcrate.com www.api.tapcrate.com;
 
@@ -74,7 +74,7 @@ server {
 #include snippets/ssl-beta.tapcrate.com.conf;
 #include snippets/ssl-params.conf;
 
-    root /home/hakon/tapcrate/tapcrate-development-api;
+    root /home/hakon/tapcrate-development-api;
 
     server_name beta.tapcrate.com www.beta.tapcrate.com;
 
@@ -94,7 +94,7 @@ server {
 #include snippets/ssl-api.tapcrate.com.conf;
 #include snippets/ssl-params.conf;
 
-    root /home/hakon/tapcrate/tapcrate-api/Public;
+    root /home/hakon/tapcrate-api/Public;
 
     server_name static.tapcrate.com www.static.tapcrate.com;
 
