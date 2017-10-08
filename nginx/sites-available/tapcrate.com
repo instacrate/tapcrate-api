@@ -53,8 +53,8 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
 
-#include snippets/ssl-api.tapcrate.com.conf;
-#include snippets/ssl-params.conf;
+    include snippets/ssl-api.tapcrate.com.conf;
+    include snippets/ssl-params.conf;
 
     root /home/hakon/tapcrate-api;
 
@@ -71,8 +71,8 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
 
-#include snippets/ssl-beta.tapcrate.com.conf;
-#include snippets/ssl-params.conf;
+    include snippets/ssl-beta.tapcrate.com.conf;
+    include snippets/ssl-params.conf;
 
     root /home/hakon/tapcrate-development-api;
 
@@ -91,8 +91,8 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
 
-#include snippets/ssl-api.tapcrate.com.conf;
-#include snippets/ssl-params.conf;
+    include snippets/ssl-api.tapcrate.com.conf;
+    include snippets/ssl-params.conf;
 
     root /home/hakon/tapcrate-api/Public;
 
