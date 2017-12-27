@@ -1,6 +1,8 @@
 
 # Redirect all HTTP trafic to HTTPS
 
+error_log  /home/hakon/tapcrate-errors  warn;
+
 server {
     listen 80;
     listen [::]:80;
