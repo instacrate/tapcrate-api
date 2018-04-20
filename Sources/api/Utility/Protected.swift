@@ -29,7 +29,7 @@ struct ModelOwner: Equatable {
     }
 
     var explained: String {
-        return "\(String(describing: modelType))(\(id))"
+        return String(describing: modelType) + "(\(id.int ?? 0))"
     }
 }
 
@@ -100,15 +100,18 @@ extension Protected where Self: Model {
         let owners = try model.owners()
         let sessions = try request.allAuthenticatedTypes()
 
-        let hasOwningSession = owners.contains { sessions.contains($0) }
+        let isOwner = owners.contains { sessions.contains($0) }
 
-        if hasOwningSession && model.actionsAllowedForOwner.contains(action) {
+        if isOwner && model.actionsAllowedForOwner.contains(action) {
             return true
-        } else if !hasOwningSession && model.actionsAllowedForPublic.contains(action) {
+        } else if !isOwner && model.actionsAllowedForPublic.contains(action) {
             return true
         }
 
-        throw try Abort.custom(status: .unauthorized, message: "You can not access \(type(of: model))(\(model.id().int ?? 0)). It is owned by \(model.owners().map { $0.explained }.joined(separator: ", ")), while you are authenticated as \(request.allAuthenticatedTypes().map { $0.explained }.joined(separator: ", "))")
+        let owner = try model.owners().map { $0.explained }.joined(separator: ", ")
+        let auth = try request.allAuthenticatedTypes().map { $0.explained }.joined(separator: ", ")
+
+        throw try Abort.custom(status: .unauthorized, message: "You can not access \(type(of: model))(\(model.throwableId())). It is owned by \(owner), while you are authenticated as \(auth)")
     }
 }
 
